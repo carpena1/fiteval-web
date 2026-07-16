@@ -126,15 +126,4 @@ first run, start waitress and open the browser.
 - Pending: golden-file validation against the desktop app on curated
   datasets (indices should match to the printed decimals; bootstrap CIs
   statistically).
-
-### Relationship to the MATLAB source
-
-The port is kept in sync with the current `FITEVAL_GUI.m`, including the
-three corrected bugs (2026-07): the KGE*/NSE imbalance envelope now uses
-NSE/KGE* (L3439), the BCa acceleration is computed per index rather than
-pooled across the four (L4164), and the ρ/α timing/amplitude diagnostic
-strings match (L3447-3452).
-
-Remaining expected difference: bootstrap confidence intervals are
-statistically (not bit-) equivalent to MATLAB because the RNG streams
-differ.
+  
