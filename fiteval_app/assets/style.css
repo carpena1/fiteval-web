@@ -1,0 +1,21 @@
+/* FITEVAL web styles */
+
+.msg-info {
+    color: #0073bd;           /* MATLAB [0 0.45 0.74] */
+    font-size: 0.9rem;
+    min-height: 1.4rem;
+}
+
+.msg-error {
+    color: #a3142e;           /* MATLAB [0.64 0.08 0.18] */
+    font-weight: bold;
+    font-size: 0.9rem;
+    min-height: 1.4rem;
+}
+
+#result-figure-box {
+    min-height: 300px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+}

@@ -1,0 +1,181 @@
+"""Goodness-of-fit indices and diagnostics.
+
+Direct port of fun_GoF_Indexes (FITEVAL_GUI.m L4043-4068), the bias block
+(L3553-3584), Dixon's Q-test (L3596-3624) and the KGE/NSE imbalance
+diagnostic (L3438-3456).
+"""
+
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+
+import numpy as np
+
+INDEX_LABELS = {1: "NSE", 2: "KGE*", 3: "KGE", 4: "E_1"}
+
+
+def rounddec(value, dec: int):
+    """MATLAB round(value*10^dec)/10^dec (round-half-away-from-zero)."""
+    value = np.asarray(value, dtype=float)
+    scaled = value * 10.0**dec
+    out = np.sign(scaled) * np.floor(np.abs(scaled) + 0.5) / 10.0**dec
+    return float(out) if out.ndim == 0 else out
+
+
+def gof_indexes(yobs, yprd, yben, yerr, j) -> np.ndarray:
+    """Return [RMSE, Ceff, KGE*, KGE].
+
+    Ceff is NSE (j=2) or Legates-McCabe E1 (j=1); benchmark series yben
+    replaces the observation mean (Seibert 2001).  yerr is the (possibly
+    uncertainty-corrected) residual used for both Ceff and RMSE.
+    """
+    yobs = np.asarray(yobs, dtype=float)
+    yprd = np.asarray(yprd, dtype=float)
+    yben = np.asarray(yben, dtype=float)
+    yerr = np.asarray(yerr, dtype=float)
+
+    ssq = np.sum(np.abs(yerr) ** j)
+    ss = np.sum(np.abs(yobs - yben) ** j)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ceff = 1.0 - ssq / ss
+
+    n = yobs.size
+    rmse = math.sqrt(np.sum(yerr**2) / n)
+
+    std_o = np.std(yobs, ddof=1)
+    std_p = np.std(yprd, ddof=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        alpha = std_p / std_o
+        if std_o == 0 or std_p == 0:
+            r = np.nan
+        else:
+            r = float(np.corrcoef(yprd, yobs)[1, 0])
+
+        beta = np.mean(yprd) / np.mean(yobs)  # Gupta et al. 2009
+        kge = 1.0 - math.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2) \
+            if np.isfinite(r) and np.isfinite(beta) and np.isfinite(alpha) else np.nan
+
+        beta_star = 1.0 + (np.mean(yprd) - np.mean(yobs)) / std_o  # Knobel/Clark
+        kge_star = 1.0 - math.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta_star - 1) ** 2) \
+            if np.isfinite(r) and np.isfinite(beta_star) and np.isfinite(alpha) else np.nan
+
+    return np.array([rmse, ceff, kge_star, kge])
+
+
+def nse_to_kge_threshold(nse_thr: float) -> float:
+    """KGEthr = 1 - sqrt(2)*(1 - sqrt(NSEthr))  (GoFIndexSelection L304)."""
+    return 1.0 - math.sqrt(2.0) * (1.0 - math.sqrt(nse_thr))
+
+
+def kge_to_nse_threshold(kge_thr: float) -> float:
+    """NSEthr = 0.5*(sqrt(2) - (1 - KGEthr))^2  (GoFIndexSelection L308)."""
+    return 0.5 * (math.sqrt(2.0) - (1.0 - kge_thr)) ** 2
+
+
+def relative_bias(yobs, yprd, bias_value: float, index_label: str
+                  ) -> tuple[float, str, str]:
+    """Model bias evaluation (L3553-3584).
+
+    Returns (rel_bias %, bias_txt1, bias_txt2); bias_txt2 uses the plain-text
+    form of the MATLAB TeX annotation.
+    """
+    yobs = np.asarray(yobs, dtype=float)
+    yprd = np.asarray(yprd, dtype=float)
+    aux = min(yobs.min(), yprd.min())
+    if aux < 0:
+        shf_yp, shf_yo = yprd - aux, yobs - aux
+    else:
+        shf_yp, shf_yo = yprd, yobs
+    m = np.mean(shf_yo)
+    if m == 0:
+        rel_bias = rounddec(np.sum(shf_yp - shf_yo) / shf_yo.size * 100, 1)
+    else:
+        rel_bias = rounddec(np.sum(shf_yp - shf_yo) / shf_yo.size / m * 100, 1)
+
+    txt2 = f" ({index_label} may be influenced by model bias)"
+    if rel_bias < -bias_value:
+        txt1 = f"Model bias: Underprediction by {rel_bias:g}% of the mean"
+        if rel_bias < -500:
+            txt1 = "Model bias: Underprediction by <-500% of the mean"
+    elif rel_bias > bias_value:
+        txt1 = f"Model bias: Overprediction by {rel_bias:g}% of the mean"
+        if rel_bias > 500:
+            txt1 = "Model bias: Overprediction by >500% of the mean"
+    else:
+        txt1, txt2 = "Model bias: NO", ""
+    return rel_bias, txt1, txt2
+
+
+@dataclass
+class OutlierResult:
+    text: str = "Presence of outliers (Q-test): NO"
+    points: np.ndarray = field(default_factory=lambda: np.empty((0, 2)))  # [Yprd Yobs]
+    indices: np.ndarray = field(default_factory=lambda: np.empty(0, dtype=int))
+
+    @property
+    def present(self) -> bool:
+        return self.points.size > 0
+
+
+def dixon_outliers(yobs, yprd) -> OutlierResult:
+    """Dixon's Q-test on residuals at alpha=0.05 (L3596-3624)."""
+    yobs = np.asarray(yobs, dtype=float)
+    yprd = np.asarray(yprd, dtype=float)
+    err_ns = yobs - yprd
+    err = np.sort(err_ns)
+    span = err[-1] - err[0]
+    if span == 0 or err.size < 3:
+        return OutlierResult()
+    q_low = (err[1] - err[0]) / span
+    q_upp = (err[-1] - err[-2]) / span
+    q_crit = 0.187 + (2.242 - 0.187) * err.size**-0.862
+
+    idx: list[int] = []
+    if q_low > q_crit:
+        idx.extend(np.flatnonzero(err_ns == err[0]).tolist())
+    if q_upp > q_crit:
+        idx.extend(np.flatnonzero(err_ns == err[-1]).tolist())
+    if not idx:
+        return OutlierResult()
+    pts = np.column_stack([yprd[idx], yobs[idx]])
+    return OutlierResult(
+        "Presence of outliers (Q-test): present and maybe affecting indicators",
+        pts, np.asarray(idx, dtype=int))
+
+
+def kge_nse_imbalance(yobs, yprd, nse: float, kge_star: float) -> str:
+    """Timing/amplitude imbalance diagnostic (L3438-3456); '' when balanced.
+
+    Only meaningful for j=2 indices; caller must skip for E1.
+
+    In sync with the fixed MATLAB source (L3439): NSE=GoF_IDXS(2),
+    KGE_star=GoF_IDXS(3), i.e. nse=GoF_IDXS[1], kge_star=GoF_IDXS[2]
+    (0-based), matching the envelope formulas (comments "KGE* lower/upper
+    bound"), which are functions of NSE.
+    For NSE<0 (or negative envelope arguments) MATLAB silently continues in
+    complex arithmetic and its comparisons use real parts; cmath reproduces
+    that exactly.
+    """
+    import cmath
+
+    yobs = np.asarray(yobs, dtype=float)
+    yprd = np.asarray(yprd, dtype=float)
+    if not np.isfinite(nse) or not np.isfinite(kge_star):
+        return ""
+    sq_nse = cmath.sqrt(nse)
+    y_lb = (1 - cmath.sqrt(1.911 * nse - 3.909 * sq_nse + 2)).real
+    y_ub = (1 - cmath.sqrt(2.114 * nse - 4.111 * sq_nse + 2)).real
+    if kge_star < 0.95 and (kge_star > y_ub or kge_star < y_lb):
+        r = float(np.corrcoef(yprd, yobs)[1, 0])
+        alpha = np.std(yprd, ddof=1) / np.std(yobs, ddof=1)
+        r2a = r / alpha
+        if r > 0.6 and r2a < 0.95:
+            return (f"Timing not matched but amplitude captured "
+                    f"(\N{GREEK SMALL LETTER RHO}/"
+                    f"\N{GREEK SMALL LETTER ALPHA}={r2a:.3f})")
+        if r > 0.6 and r2a > 1.05:
+            return (f"Timing matched but amplitude not captured "
+                    f"(\N{GREEK SMALL LETTER RHO}/"
+                    f"\N{GREEK SMALL LETTER ALPHA}={r2a:.3f})")
+    return ""
