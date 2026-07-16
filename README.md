@@ -127,6 +127,23 @@ first run, start waitress and open the browser.
   datasets (indices should match to the printed decimals; bootstrap CIs
   statistically).
 
+## Class-limit (threshold) scales
+
+Class limits are entered in the **Configuration** dialog in the scale of the
+selected main index, and are converted automatically when the index changes.
+There are three distinct scales, and every conversion pivots through NSE
+(e.g. KGE* → NSE → E1):
+
+| Index | Conversion from NSE | Default limits |
+|-------|---------------------|----------------|
+| NSE | — (reference scale) | 0.65 / 0.80 / 0.90 |
+| KGE*, KGE | `KGE = 1 - √2·(1 - √NSE)` | 0.73 / 0.85 / 0.93 |
+| E1 | `E1 = 1 - √(1 - NSE)` | 0.41 / 0.55 / 0.68 |
+
+E1 (Legates–McCabe) is built on absolute errors where NSE uses squared
+errors, so the two are **not** on the same scale — the desktop app treats
+them as equal, which understates the E1 thresholds; this port converts them.
+
 ## License
 
 Copyright © 2011–2026 Axel Ritter and Rafael Muñoz-Carpena.

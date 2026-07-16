@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from fiteval_core.indices import (dixon_outliers, gof_indexes, kge_nse_imbalance,
-                                  kge_to_nse_threshold, nse_to_kge_threshold,
+                                  e1_to_nse_threshold, kge_to_nse_threshold,
+                                  nse_to_e1_threshold, nse_to_kge_threshold,
                                   relative_bias, rounddec)
 
 
@@ -69,6 +70,18 @@ def test_threshold_conversion_round_trip():
     for nse in (0.65, 0.8, 0.9):
         assert kge_to_nse_threshold(nse_to_kge_threshold(nse)) == pytest.approx(nse)
     assert nse_to_kge_threshold(0.65) == pytest.approx(1 - math.sqrt(2) * (1 - math.sqrt(0.65)))
+
+
+def test_e1_threshold_conversion():
+    """E1 = 1 - sqrt(1 - NSE); E1 is its own scale, not equal to NSE."""
+    assert nse_to_e1_threshold(0.65) == pytest.approx(1 - math.sqrt(1 - 0.65))
+    # the default NSE limits map to these E1 limits (2-decimal display)
+    assert [round(nse_to_e1_threshold(t), 2) for t in (0.65, 0.80, 0.90)] \
+        == [0.41, 0.55, 0.68]
+    for nse in (0.65, 0.8, 0.9):
+        assert e1_to_nse_threshold(nse_to_e1_threshold(nse)) == pytest.approx(nse)
+    # E1 thresholds are stricter-looking than NSE: they must not be equal
+    assert nse_to_e1_threshold(0.65) != pytest.approx(0.65)
 
 
 def test_rounddec_matlab_halfaway():

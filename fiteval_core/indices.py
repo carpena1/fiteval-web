@@ -73,6 +73,22 @@ def kge_to_nse_threshold(kge_thr: float) -> float:
     return 0.5 * (math.sqrt(2.0) - (1.0 - kge_thr)) ** 2
 
 
+def nse_to_e1_threshold(nse_thr: float) -> float:
+    """E1thr = 1 - sqrt(1 - NSEthr).
+
+    E1 (Legates-McCabe) and NSE are NOT on the same scale: E1 uses absolute
+    errors (j=1) where NSE uses squared errors (j=2), giving
+    E1 = 1 - sqrt(1 - NSE).  The desktop app treats the two scales as equal,
+    which understates the E1 thresholds; the port converts them.
+    """
+    return 1.0 - math.sqrt(1.0 - nse_thr)
+
+
+def e1_to_nse_threshold(e1_thr: float) -> float:
+    """NSEthr = 1 - (1 - E1thr)^2  (inverse of nse_to_e1_threshold)."""
+    return 1.0 - (1.0 - e1_thr) ** 2
+
+
 def relative_bias(yobs, yprd, bias_value: float, index_label: str
                   ) -> tuple[float, str, str]:
     """Model bias evaluation (L3553-3584).

@@ -65,3 +65,23 @@ def test_records_to_array_blank_cells():
 def test_records_to_array_empty():
     with pytest.raises(DataError):
         records_to_array([])
+
+
+def test_threshold_scale_pivot_nse_kge_e1():
+    """Index-change threshold conversion: NSE, KGE-family and E1 are three
+    distinct scales and every conversion pivots through NSE."""
+    from fiteval_app.callbacks.config_cb import _from_nse, _scale, _to_nse
+
+    def conv(t, prev, val):
+        return round(_from_nse(_to_nse(t, prev), val), 2)
+
+    assert (_scale(1), _scale(2), _scale(3), _scale(4)) == \
+        ("nse", "kge", "kge", "e1")
+    # NSE -> E1 uses E1 = 1 - sqrt(1 - NSE)
+    assert [conv(t, 1, 4) for t in (0.65, 0.80, 0.90)] == [0.41, 0.55, 0.68]
+    # NSE -> KGE* unchanged from before
+    assert [conv(t, 1, 2) for t in (0.65, 0.80, 0.90)] == [0.73, 0.85, 0.93]
+    # KGE* -> E1 goes KGE* -> NSE -> E1 (not treated as NSE directly)
+    assert conv(0.73, 2, 4) == 0.41
+    # E1 -> NSE recovers the NSE limits
+    assert [conv(t, 4, 1) for t in (0.41, 0.55, 0.68)] == [0.65, 0.8, 0.9]

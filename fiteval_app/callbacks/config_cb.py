@@ -5,9 +5,39 @@ from __future__ import annotations
 from dash import Input, Output, State, no_update
 
 from fiteval_core.config import check_class_limits
-from fiteval_core.indices import kge_to_nse_threshold, nse_to_kge_threshold
+from fiteval_core.indices import (e1_to_nse_threshold, kge_to_nse_threshold,
+                                  nse_to_e1_threshold, nse_to_kge_threshold)
 
 from .helpers import cfg_from_store, cfg_to_store, message
+
+# Threshold scales per main-index flag: NSE(1), KGE family(2,3), E1(4).
+# Class limits are stored in the selected index's scale, so switching index
+# converts them; NSE is the pivot for every conversion.
+_SCALES = {1: "nse", 2: "kge", 3: "kge", 4: "e1"}
+
+
+def _scale(flag) -> str:
+    return _SCALES.get(int(flag or 1), "nse")
+
+
+def _to_nse(value: float, flag) -> float:
+    """Express a threshold given in flag's scale as an NSE threshold."""
+    s = _scale(flag)
+    if s == "kge":
+        return kge_to_nse_threshold(value)
+    if s == "e1":
+        return e1_to_nse_threshold(value)
+    return value
+
+
+def _from_nse(nse_value: float, flag) -> float:
+    """Express an NSE threshold in flag's scale."""
+    s = _scale(flag)
+    if s == "kge":
+        return nse_to_kge_threshold(nse_value)
+    if s == "e1":
+        return nse_to_e1_threshold(nse_value)
+    return nse_value
 
 
 def register(app) -> None:
@@ -45,17 +75,19 @@ def register(app) -> None:
         prevent_initial_call=True,
     )
     def convert_thresholds(val, prev, t1, t2, t3):
-        """Live NSE<->KGE threshold conversion (GoFIndexSelection, L299-312)."""
+        """Live threshold conversion when the main index changes.
+
+        Extends GoFIndexSelection (L299-312) with the E1 scale: NSE, the
+        KGE family (KGE*/KGE) and E1 are three distinct scales, so every
+        conversion pivots through NSE (e.g. KGE* -> NSE -> E1).
+        """
         if prev is None or val == prev:
             return no_update, no_update, no_update, val
-        thr = [t1, t2, t3]
+        if _scale(prev) == _scale(val):      # e.g. KGE* -> KGE: same scale
+            return no_update, no_update, no_update, val
         try:
-            if prev in (1, 4) and val in (2, 3):
-                thr = [round(nse_to_kge_threshold(float(t)), 2) for t in thr]
-            elif prev in (2, 3) and val in (1, 4):
-                thr = [round(kge_to_nse_threshold(float(t)), 2) for t in thr]
-            else:
-                return no_update, no_update, no_update, val
+            thr = [round(_from_nse(_to_nse(float(t), prev), val), 2)
+                   for t in (t1, t2, t3)]
         except (TypeError, ValueError):
             return no_update, no_update, no_update, val
         return thr[0], thr[1], thr[2], val
