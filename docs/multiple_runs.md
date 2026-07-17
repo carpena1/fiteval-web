@@ -122,3 +122,24 @@ measurement-uncertainty methods are defined on NSE), and it is classified
 against the NSE-scale class limits — so its threshold shows the NSE value
 (e.g. 0.65) while the No-Unc threshold shows the KGE*/KGE value (e.g. 0.73).
 The *Indicator* column of each section states which index that section used.
+
+## Example summary
+
+Two runs from `multi_run_test.txt` with **KGE\*** selected in Configuration —
+a deterministic run (option `0`) and an observation-uncertainty run
+(`3 9 oN 17`). The first fills only the **No Unc.** section (the **With Unc.**
+columns show `--`); the second fills both, and its **With Unc.** *Indicator*
+is `NSE` with the NSE-scale threshold `0.65`, versus `KGE*`/`0.73` in the
+No-Unc section:
+
+```
+,,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,No Unc.,With Unc.,With Unc.,With Unc.,With Unc.,With Unc.,With Unc.,With Unc.,With Unc.,,,
+Case,Option,NSE,NSE 95%CI,KGE*,KGE* 95%CI,RMSE,RMSE 95%CI,NRMSE,Indicator,p-value,threshold,Indicator,NSE,NSE 95%CI,RMSE,RMSE 95%CI,NRMSE,p-value,threshold,Indicator,Bias,Outlier,N
+data_ex1.in Good model fit,0,0.857,[0.717 - 0.933],0.888,[0.811 - 0.965],0.02,[0.020 - 0.030],37%,KGE*,0.055,0.73,KGE*,--,,--,,--,--,--,--,3.20%,No,24
+data_ex0a.in Obs. uncertainty (CF method),3 9 oN 17,0.718,[0.520 - 0.838],0.828,[0.794 - 0.889],0.61,[0.480 - 0.750],53%,KGE*,0.1,0.73,KGE*,0.816,[0.643 - 0.910],0.49,[0.360 - 0.660],42%,0.131,0.65,NSE,1.80%,No,48
+```
+
+Bootstrap CIs and p-values differ slightly from run to run (different RNG
+draws) unless a seed is fixed. If only deterministic rows are present the
+**With Unc.** section is omitted entirely; if every row carries an
+uncertainty option, both sections are always populated.
