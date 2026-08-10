@@ -152,8 +152,8 @@ first run, start waitress and open the browser.
 - Phase 3 (done): multi-run batch dialog (file + option rows, per-row logs,
   `<list>_summary.csv` in the desktop format, zip download); Windows
   deployment docs in `docs/deployment_windows.md`.
-- Pending: golden-file validation against the desktop app on curated
-  datasets (indices should match to the printed decimals; bootstrap CIs
+- Phase 4 (done): golden-file validation against the desktop app on curated
+  datasets (indices match to the printed decimals; bootstrap CIs
   statistically).
 
 ## Class-limit (threshold) scales
