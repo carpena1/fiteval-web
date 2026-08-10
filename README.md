@@ -38,6 +38,35 @@ For a local single-user launch, use `scripts/run_local.sh` (macOS/Linux) or
 `scripts/run_local.bat` (Windows) — each creates the virtual environment on
 first run, starts waitress and opens the browser.
 
+### Local launch tips (macOS / Linux)
+
+**Restarting.** `scripts/run_local.sh` refuses to start if port 8050 is
+already taken, printing `Port 8050 is already in use` — usually a previous
+instance still running in another terminal. Kill it and relaunch:
+
+```bash
+lsof -ti:8050 | xargs kill
+./scripts/run_local.sh
+```
+
+**Safari on macOS.** If Safari reports
+
+> Safari can't open the page "http://127.0.0.1:8050/" … Navigation failed
+> because the request was for an HTTP URL with HTTPS-Only enabled
+> (WebKitErrorDomain:305)
+
+the server is running correctly — Safari's HTTPS-Only mode is refusing the
+plain-HTTP loopback address before any connection is made. On Safari 26
+(macOS 26) and later, open Safari → Settings (`Cmd+,`) → **Security** and
+uncheck **"Warn before connecting to a website over HTTP"**. Alternatively,
+open `http://127.0.0.1:8050` in another browser; Chrome and Firefox allow
+loopback HTTP without changing any setting. To confirm the server itself is
+healthy, this should print `200`:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8050/
+```
+
 See `docs/deployment_windows.md` for Windows Server (NSSM service, IIS
 reverse proxy) instructions and `docs/multiple_runs.md` for the batch
 (multiple-runs) mode.
