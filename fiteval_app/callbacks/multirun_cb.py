@@ -8,13 +8,15 @@ from pathlib import Path
 
 from dash import Input, Output, State, ctx, dcc, html, no_update
 
+from fiteval_core.dataio import DataError, safe_join
 from fiteval_core.indices import INDEX_LABELS
 from fiteval_core.multirun import parse_file_field, parse_list_file, run_multi
 
-from ..session import session_dir
+from ..session import session_dir, session_file
 from .helpers import cfg_from_store, decode_upload
 
 LIST_EXTS = (".txt", ".cf", ".mr", ".lst")
+MAX_MR_ROWS = 500  # cap batch size to bound per-request CPU/disk use
 
 
 def _needed_files(rows: list[dict]) -> list[str]:
@@ -38,7 +40,15 @@ def _needed_files(rows: list[dict]) -> list[str]:
 
 
 def _missing_files(rows: list[dict], wdir: Path) -> list[str]:
-    return [n for n in _needed_files(rows) if not (wdir / n).is_file()]
+    missing = []
+    for n in _needed_files(rows):
+        try:
+            present = safe_join(wdir, n).is_file()
+        except DataError:
+            present = False
+        if not present:
+            missing.append(n)
+    return missing
 
 
 def register(app) -> None:
@@ -88,9 +98,13 @@ def register(app) -> None:
             list_rows: list[dict] = []
             data_files: list[str] = []
             for content, fname in zip(contents, filenames):
-                name = Path(fname).name
+                try:
+                    dest = safe_join(wdir, fname)
+                except DataError:
+                    continue
+                name = dest.name
                 text = decode_upload(content)
-                (wdir / name).write_text(text)
+                dest.write_text(text)
                 saved += 1
                 if name.lower().endswith(LIST_EXTS):
                     list_rows += [{"file": f, "option": o, "logs": ""}
@@ -138,6 +152,10 @@ def register(app) -> None:
         if not rows:
             return no_update, no_update, html.Span(
                 "First, load data", className="msg-error"), True, True
+        if len(rows) > MAX_MR_ROWS:
+            return no_update, no_update, html.Span(
+                f"Too many runs ({len(rows)}); the limit is {MAX_MR_ROWS} "
+                "per batch.", className="msg-error"), True, True
         cfg = cfg_from_store(cfg_store)
         wdir = session_dir(sid)
         missing = _missing_files(rows, wdir)
@@ -166,26 +184,35 @@ def register(app) -> None:
         Output("mr-download-summary", "data"),
         Input("mr-dl-summary-btn", "n_clicks"),
         State("mr-state", "data"),
+        State("session-id", "data"),
         prevent_initial_call=True,
     )
-    def dl_summary(_n, state):
+    def dl_summary(_n, state, sid):
         if not state:
             return no_update
-        return dcc.send_file(state["summary"])
+        try:
+            p = session_file(sid, state["summary"])
+        except (ValueError, KeyError):
+            return no_update
+        return dcc.send_file(str(p)) if p.exists() else no_update
 
     @app.callback(
         Output("mr-download-zip", "data"),
         Input("mr-dl-zip-btn", "n_clicks"),
         State("mr-state", "data"),
+        State("session-id", "data"),
         prevent_initial_call=True,
     )
-    def dl_zip(_n, state):
+    def dl_zip(_n, state, sid):
         if not state:
             return no_update
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            for f in state["files"]:
-                p = Path(f)
+            for f in state.get("files", []):
+                try:
+                    p = session_file(sid, f)
+                except ValueError:
+                    continue
                 if p.exists():
                     zf.write(p, p.name)
         buf.seek(0)

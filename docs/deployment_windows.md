@@ -22,10 +22,18 @@ setx FITEVAL_WORKSPACE D:\fiteval_workspace /M
 `scripts\run_local.bat` starts waitress on 127.0.0.1:8050 and opens the
 browser. No server configuration needed.
 
+> **Security.** The app has no authentication of its own — anyone who can
+> reach the port can use it. Prefer option 3 (IIS reverse proxy with waitress
+> bound to `127.0.0.1`), and put access control at IIS if the app is reachable
+> beyond a trusted LAN. See `security_review.md` for the full review and the
+> deployment responsibilities it depends on.
+
 ## 2. Standalone service on a port (recommended first deployment)
 
 Serve with waitress and register it as a Windows service with NSSM
-(https://nssm.cc):
+(https://nssm.cc). The `--host=0.0.0.0` binding below exposes the app to the
+network with no authentication — use it only for a trusted-LAN test, and move
+to option 3 (waitress on `127.0.0.1` behind IIS) for real use:
 
 ```bat
 nssm install FITEVAL C:\fiteval_web\.venv\Scripts\python.exe ^

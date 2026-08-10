@@ -20,6 +20,26 @@ class DataError(ValueError):
     """User-facing data problem (message mirrors the desktop app wording)."""
 
 
+def safe_join(directory: str | Path, name: str) -> Path:
+    """Join `name` onto `directory` using only its basename.
+
+    All workspace files are flat (direct children of the session directory),
+    so a legitimate reference is always a bare filename. Stripping to the
+    basename and verifying the result stays directly inside `directory`
+    prevents a crafted value ('../../etc/passwd', '/etc/passwd') — e.g. one
+    round-tripped through a browser store or a multi-run list file — from
+    escaping the workspace.
+    """
+    directory = Path(directory)
+    base = Path(str(name)).name
+    if not base or base in (".", ".."):
+        raise DataError(f"Invalid file name: {name!r}")
+    candidate = directory / base
+    if candidate.resolve().parent != directory.resolve():
+        raise DataError(f"Invalid file name: {name!r}")
+    return candidate
+
+
 def parse_numeric_text(text: str) -> np.ndarray:
     """Parse whitespace/comma-separated numeric rows (files or pasted data).
 

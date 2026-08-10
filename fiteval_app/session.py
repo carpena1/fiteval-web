@@ -22,10 +22,28 @@ def new_session_id() -> str:
 
 def session_dir(session_id: str) -> Path:
     """Workspace directory for a session (created on demand)."""
-    if not session_id or not session_id.isalnum():
+    if not session_id or not session_id.isascii() or not session_id.isalnum():
         raise ValueError("Invalid session id")
     p = WORKSPACE_ROOT / session_id
     p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def session_file(session_id: str, name: str) -> Path:
+    """Resolve `name` to a file inside the session workspace, safely.
+
+    Only the basename of `name` is used and the result is verified to sit
+    directly inside the session directory, so a value round-tripped through a
+    browser store (run-state / mr-state) cannot be used to read, write or
+    download a file outside the caller's own workspace.
+    """
+    wdir = session_dir(session_id)
+    base = Path(str(name)).name
+    if not base or base in (".", ".."):
+        raise ValueError("Invalid file name")
+    p = (wdir / base).resolve()
+    if p.parent != wdir.resolve():
+        raise ValueError("Invalid file name")
     return p
 
 

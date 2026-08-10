@@ -12,7 +12,7 @@ from fiteval_core.engine import EngineError
 from fiteval_core.runner import run_evaluation, run_evaluation_unc
 from fiteval_core.uncertainty import UncError
 
-from ..session import session_dir
+from ..session import session_dir, session_file
 from .helpers import cfg_from_store, img_src, message, records_to_array
 from .uncertainty_cb import spec_from_state
 
@@ -73,6 +73,7 @@ def register(app) -> None:
         name = (fname or project or "clipboard_1.in").strip()
         if "." not in name:
             name += ".in"
+        name = Path(name).name  # confine to workspace: no path traversal
         wdir = session_dir(sid)
         data = swap_first_two(table)  # engine wants observed-first
 
@@ -128,10 +129,15 @@ def register(app) -> None:
         Output("run-state", "data", allow_duplicate=True),
         Input("result-view", "value"),
         State("run-state", "data"),
+        State("session-id", "data"),
         prevent_initial_call=True,
     )
-    def switch_view(view, state):
+    def switch_view(view, state, sid):
         if not state or view not in state.get("views", {}):
             return no_update, no_update
+        try:
+            png = session_file(sid, state["views"][view]["png"])
+        except (ValueError, KeyError, OSError):
+            return no_update, no_update
         state["current"] = view
-        return img_src(Path(state["views"][view]["png"])), state
+        return img_src(png), state

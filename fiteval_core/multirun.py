@@ -17,7 +17,7 @@ import numpy as np
 
 from .bootstrap import BootstrapError
 from .config import FitevalConfig
-from .dataio import DataError, read_in_file
+from .dataio import DataError, read_in_file, safe_join
 from .engine import EngineError
 from .runner import RunArtifacts, run_evaluation, run_evaluation_unc
 from .uncertainty import UncError, UncSpec, parse_unc_string
@@ -86,7 +86,7 @@ def option_to_spec(option: str, workspace: Path
         rest = option[1:].strip()
         if not rest:
             raise UncError(f"ERROR: provide error file name after the {first}")
-        err_path = workspace / rest
+        err_path = safe_join(workspace, rest)
         if not err_path.is_file():
             raise UncError(f"ERROR: file {rest} not found!")
         err = np.atleast_2d(read_in_file(err_path))
@@ -195,7 +195,7 @@ def run_multi(rows: list[tuple[str, str]], workspace: str | Path,
     for field_str, option in rows:
         try:
             fname, norep, figtext = parse_file_field(field_str)
-            fpath = workspace / fname
+            fpath = safe_join(workspace, fname)
             if not fpath.is_file():
                 raise DataError(f"File {fname} not found!")
             data = read_in_file(fpath)
@@ -252,8 +252,8 @@ def run_multi(rows: list[tuple[str, str]], workspace: str | Path,
         header += ["Bias", "Outlier", "N"]
         out.header = header
 
-        base = list_name.split(".")[0] if list_name else "mr"
-        out.summary_path = workspace / f"{base}_summary.csv"
+        base = Path(str(list_name)).name.split(".")[0] if list_name else "mr"
+        out.summary_path = safe_join(workspace, f"{base or 'mr'}_summary.csv")
         with open(out.summary_path, "w") as fid:
             fid.write(",".join(band) + "\n")
             fid.write(",".join(header) + "\n")

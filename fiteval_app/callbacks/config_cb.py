@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dash import Input, Output, State, no_update
 
-from fiteval_core.config import check_class_limits
+from fiteval_core.config import MAX_DPI, MAX_RESAMPLES, check_class_limits
 from fiteval_core.indices import (e1_to_nse_threshold, kge_to_nse_threshold,
                                   nse_to_e1_threshold, nse_to_kge_threshold)
 
@@ -121,11 +121,11 @@ def register(app) -> None:
         cfg.class_lim = thr
         cfg.bias_value = float(bias) if bias is not None else 5.0
         cfg.bstype = int(bm or 0)
-        cfg.n_resamples = max(5000, int(resamples or 20000))
+        cfg.n_resamples = min(MAX_RESAMPLES, max(5000, int(resamples or 20000)))
         cfg.gof_index = int(gof or 1)
         cfg.font_size = float(fontsize) if fontsize else 10.0
         cfg.marker_size = float(markersize) if markersize else 5.0
         cfg.marker = (mcolor or "b") + (msymbol or "o")
-        cfg.dpi = max(72, int(dpi or 100))
+        cfg.dpi = min(MAX_DPI, max(72, int(dpi or 100)))
         msg, cls = message("Configuration saved")
         return False, cfg_to_store(cfg), "", msg, cls

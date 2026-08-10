@@ -15,6 +15,10 @@ MARKER_SYMBOLS = "o.x+*sdv^<>ph"
 
 DEFAULT_UNC_STRING = "0 %"
 
+# Upper bounds enforced by FitevalConfig.validated() to cap per-request cost.
+MAX_RESAMPLES = 100000
+MAX_DPI = 600
+
 
 @dataclass
 class FitevalConfig:
@@ -44,12 +48,17 @@ class FitevalConfig:
         return self.marker[1] if len(self.marker) > 1 else "o"
 
     def validated(self) -> "FitevalConfig":
-        """Clamp values the way the desktop Configuration dialog does."""
+        """Clamp values to safe bounds (floors match the desktop dialog).
+
+        Upper bounds cap per-request CPU/memory so a crafted configuration
+        (e.g. one edited in a browser store) cannot request a runaway
+        bootstrap or an enormous figure canvas.
+        """
         cfg = replace(self)
-        cfg.n_resamples = max(5000, int(cfg.n_resamples))
-        cfg.dpi = max(72, int(cfg.dpi))
-        cfg.marker_size = max(1.0, float(cfg.marker_size))
-        cfg.font_size = max(1.0, float(cfg.font_size))
+        cfg.n_resamples = min(MAX_RESAMPLES, max(5000, int(cfg.n_resamples)))
+        cfg.dpi = min(MAX_DPI, max(72, int(cfg.dpi)))
+        cfg.marker_size = min(50.0, max(1.0, float(cfg.marker_size)))
+        cfg.font_size = min(40.0, max(1.0, float(cfg.font_size)))
         return cfg
 
 

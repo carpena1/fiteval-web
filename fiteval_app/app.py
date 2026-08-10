@@ -21,6 +21,9 @@ def create_app(url_prefix: str | None = None) -> Dash:
         **kwargs,
     )
     app.layout = build_layout  # callable: fresh session id per page load
+    # Cap request body size (uploads arrive as base64 in the callback POST)
+    # so a single request cannot exhaust memory or disk.
+    app.server.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32 MB
     register_all(app)
     sweep_stale_sessions()
     return app

@@ -19,7 +19,8 @@ def cfg_from_store(store: dict | None) -> FitevalConfig:
     cfg = FitevalConfig(**{k: v for k, v in store.items()
                            if k in FitevalConfig.__dataclass_fields__})
     cfg.class_lim = tuple(cfg.class_lim)
-    return cfg
+    # The store is client-controlled; clamp cost-bearing fields to safe bounds.
+    return cfg.validated()
 
 
 def cfg_to_store(cfg: FitevalConfig) -> dict:
