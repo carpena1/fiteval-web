@@ -38,7 +38,9 @@ def session_file(session_id: str, name: str) -> Path:
     download a file outside the caller's own workspace.
     """
     wdir = session_dir(session_id)
-    base = Path(str(name)).name
+    # Treat '\' as a separator too, so a Windows-style name is reduced the
+    # same way on any OS the tests or server run on.
+    base = Path(str(name).replace("\\", "/")).name
     if not base or base in (".", ".."):
         raise ValueError("Invalid file name")
     p = (wdir / base).resolve()

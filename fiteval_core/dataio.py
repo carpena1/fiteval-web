@@ -31,7 +31,9 @@ def safe_join(directory: str | Path, name: str) -> Path:
     escaping the workspace.
     """
     directory = Path(directory)
-    base = Path(str(name)).name
+    # Treat '\' as a separator too, so a Windows-style name is reduced the
+    # same way on any OS the tests or server run on.
+    base = Path(str(name).replace("\\", "/")).name
     if not base or base in (".", ".."):
         raise DataError(f"Invalid file name: {name!r}")
     candidate = directory / base
