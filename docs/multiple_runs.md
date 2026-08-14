@@ -25,21 +25,35 @@ datafile [norep] label ; option
 
 Everything **before** the first `;` (or `,`) is the *File Name* field;
 everything **after** it is the *Option* field. The label is optional and is
-printed on the run's figure. Example (`multi_run_test.txt`):
+printed on the run's figure. A complete, ready-to-run example ships in the
+repo as [`examples/multi_run_test.txt`](../examples/multi_run_test.txt),
+together with every `.in`/`.err` file it references:
 
 ```
-data_ex1.in Noisy fit ; 0
-data_ex4.in Very good model fit ; 0
-data_ex2.in Obs. uncertainty (CF method with PER) ; 0.25
-data_ex3.in norep Remove repeated ; 0
-data_ex0.in Obs. uncertainty (CF method) ; 3 9 oN 17
-data_ex0a.in Model uncertainty (CF method) ; 4 13 pT 10 20
-data_ex0b.in Obs. & Model uncertainty (CF method) ; 3 11 oT 25 25 pT 15 20
-data_ex0c.in PER method (indiv. symmetric PER) ; 1 data_ex0_PER.err
-data_ex0d.in PER method (indiv. asymmetric errors) ; 1 data_ex0_UBs.err
-data_ex0e.in CF method (indiv. symmetric PER) ; 2 data_ex0_PER.err
-data_ex0f.in CF method (indiv. asymmetric errors) ; 2 data_ex0_UBs.err
+data_ex1.in Good model fit; 0
+data_ex2.in Outlier detected; 0
+data_ex3.in norep Repeated values removed; 0
+data_ex0.in Acceptable model fit; 0
+data_ex0a.in Obs. uncertainty (CF method); 3 9 oN 17
+data_ex0b.in Model uncertainty (CF method); 4 13 pT 10 20
+data_ex0c.in Obs. & Model uncertainty (CF method); 3 11 oT 25 25 pT 15 20
+data_ex0d.in CF method (common PER); 0.20
+data_ex0e.in CF method (indiv. symmetric PER);2 data_ex0_PER.err
+data_ex0f.in CF method (indiv. symmetric errors);2 data_ex0_UBs_sym.err
+data_ex0g.in CF method (indiv. asymmetric errors);2 data_ex0_UBs_asym.err
+data_ex0h.in PER method (indiv. symmetric PER);1 data_ex0_PER.err
+data_ex0i.in PER method (indiv. symmetric errors);1 data_ex0_UBs_sym.err
+data_ex0j.in PER method (indiv. asymmetric errors);1 data_ex0_UBs_asym.err
 ```
+
+Reproduce it from the command line (writes `multi_run_test_summary.csv` and
+every per-run output into `examples/`):
+
+```bash
+python -m fiteval_core examples/multi_run_test.txt --multi
+```
+
+Or, in the web GUI:
 
 Click **Load list / data / error files…** and select the list file
 **together with** every data (`.in`) and error (`.err`) file it references —

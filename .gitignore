@@ -26,3 +26,5 @@ fiteval_workspace/
 *_out.txt
 *_out.png
 *_summary.csv
+# Example-run outputs (inputs under examples/ are tracked; outputs are not)
+examples/*.pdf

@@ -101,8 +101,13 @@ Examples:
 python -m fiteval_core data_ex1.in                     # report + PNG/PDF
 python -m fiteval_core data_ex1.in --ext png --seed 42 # + individual PNGs, reproducible
 python -m fiteval_core data_ex3.in --norep --config fitevalconfig.txt
-python -m fiteval_core multi_run_test.txt --multi      # batch: <list>_summary.csv + all runs
+python -m fiteval_core examples/multi_run_test.txt --multi  # batch: <list>_summary.csv + all runs
 ```
+
+The repo ships a ready-to-run batch under [`examples/`](examples/):
+`multi_run_test.txt` (14 rows exercising every uncertainty option) plus the
+`.in`/`.err` files it references. See
+[`examples/README.md`](examples/README.md).
 
 Single-file mode covers deterministic runs; `--multi` runs a batch list
 (including per-row measurement-uncertainty options) and writes the
