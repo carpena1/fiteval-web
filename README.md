@@ -76,7 +76,7 @@ reverse proxy) instructions and `docs/multiple_runs.md` for the batch
 ### `fiteval_core` — batch evaluation of one file
 
 ```bash
-python -m fiteval_core INFILE [--config PATH] [--ext FORMAT]
+python -m fiteval_core INFILE [--multi] [--config PATH] [--ext FORMAT]
                               [--norep] [--text "..."] [--seed N]
 ```
 
@@ -87,7 +87,8 @@ also echoed to stdout.
 
 | Argument | Default | Meaning |
 |----------|---------|---------|
-| `INFILE` (positional) | — | Input `.in` data file, whitespace-separated `[Yobs Yprd]` or `[Yobs Yprd Ybenchmark]`. Required. |
+| `INFILE` (positional) | — | Input `.in` data file, whitespace-separated `[Yobs Yprd]` or `[Yobs Yprd Ybenchmark]` — or a batch list file with `--multi`. Required. |
+| `--multi` | off | Treat `INFILE` as a multi-run **list file** (one `datafile [norep] [label] ; option` per line) and write `<list>_summary.csv` plus every per-run output into the list file's directory. See [Multiple runs](docs/multiple_runs.md). All referenced `.in`/`.err` files must sit next to the list file. |
 | `--config PATH` | built-in defaults | `fitevalconfig.txt` to load (class limits, main index, bootstrap type / resamples, font, marker, **dpi**, …). Same 12-line format the GUI writes. |
 | `--ext FORMAT` | *(none)* | Also save the individual panels (`<name>.<ext>`, `_cdf`, `_ds`, `_cb`) in this format. One of `pdf`, `png`, `jpg`, `eps`, `tif`. |
 | `--norep` | off | Remove repeated `[Yprd Yobs]` cases before evaluating. |
@@ -100,13 +101,15 @@ Examples:
 python -m fiteval_core data_ex1.in                     # report + PNG/PDF
 python -m fiteval_core data_ex1.in --ext png --seed 42 # + individual PNGs, reproducible
 python -m fiteval_core data_ex3.in --norep --config fitevalconfig.txt
+python -m fiteval_core multi_run_test.txt --multi      # batch: <list>_summary.csv + all runs
 ```
 
-The CLI covers single-file, no-uncertainty runs. For measurement
-uncertainty and batch (multiple-runs) mode, use the web GUI (uncertainty
-methods are also available programmatically via
-`fiteval_core.runner.run_evaluation_unc` and
-`fiteval_core.multirun.run_multi`).
+Single-file mode covers deterministic runs; `--multi` runs a batch list
+(including per-row measurement-uncertainty options) and writes the
+two-section `<list>_summary.csv`. For interactive measurement-uncertainty on
+a single file use the web GUI; the same methods are available
+programmatically via `fiteval_core.runner.run_evaluation_unc` and
+`fiteval_core.multirun.run_multi`.
 
 ### `fiteval_app` — the Dash web GUI
 

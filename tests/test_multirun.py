@@ -177,3 +177,35 @@ def test_kge_and_e1_relabel_columns(tmp_path):
                    FitevalConfig(gof_index=4, n_resamples=5000),
                    rng=np.random.default_rng(3))
     assert e1.header[2] == "E1" and e1.header[4] == "KGE*"
+
+
+def test_cli_multi(tmp_path, capsys):
+    """`python -m fiteval_core --multi list.txt` writes the two-section CSV."""
+    from fiteval_core.__main__ import main
+
+    _write_data(tmp_path / "a.in", seed=1)
+    _write_data(tmp_path / "b.in", seed=2)
+    (tmp_path / "runs.txt").write_text(
+        "a.in Deterministic ; 0\n"
+        "b.in Obs. uncertainty ; 3 9 oN 17\n")
+
+    rc = main([str(tmp_path / "runs.txt"), "--multi", "--seed", "3"])
+    assert rc == 0
+
+    summary = tmp_path / "runs_summary.csv"
+    assert summary.is_file()
+    lines = summary.read_text().splitlines()
+    assert lines[0].startswith(",,No Unc.") and "With Unc." in lines[0]
+    assert lines[3].split(",")[19] == "NSE"      # forced-NSE With-Unc row
+
+    out = capsys.readouterr().out
+    assert "a.in: OK" in out and "b.in: OK" in out
+    assert "runs_summary.csv" in out
+
+
+def test_cli_multi_empty_list(tmp_path, capsys):
+    from fiteval_core.__main__ import main
+
+    (tmp_path / "empty.txt").write_text("\n  \n")
+    assert main([str(tmp_path / "empty.txt"), "--multi"]) == 1
+    assert "No runs found" in capsys.readouterr().err
