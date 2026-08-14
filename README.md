@@ -67,9 +67,11 @@ healthy, this should print `200`:
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8050/
 ```
 
-See `docs/deployment_windows.md` for Windows Server (NSSM service, IIS
-reverse proxy) instructions and `docs/multiple_runs.md` for the batch
-(multiple-runs) mode.
+See [docs/deployment_windows.md](docs/deployment_windows.md) for Windows
+Server (NSSM service, IIS reverse proxy) instructions and
+[docs/multiple_runs.md](docs/multiple_runs.md) for the batch (multiple-runs)
+mode — the list-file format, the full option-string reference, and the
+summary-table layout.
 
 ## Command-line reference
 
@@ -107,7 +109,9 @@ python -m fiteval_core examples/multi_run_test.txt --multi  # batch: <list>_summ
 The repo ships a ready-to-run batch under [`examples/`](examples/):
 `multi_run_test.txt` (14 rows exercising every uncertainty option) plus the
 `.in`/`.err` files it references. See
-[`examples/README.md`](examples/README.md).
+[`examples/README.md`](examples/README.md) for the file list, and
+[docs/multiple_runs.md](docs/multiple_runs.md) for the detailed guide to the
+list-file format, every option string, and the summary-table columns.
 
 Single-file mode covers deterministic runs; `--multi` runs a batch list
 (including per-row measurement-uncertainty options) and writes the
