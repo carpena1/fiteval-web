@@ -1,7 +1,19 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 from fiteval_core.config import FitevalConfig, check_class_limits, read_config, write_config
+
+
+def test_bundled_example_config_loads():
+    """The shipped examples/fitevalconfig.txt parses to the documented defaults."""
+    path = Path(__file__).resolve().parent.parent / "examples" / "fitevalconfig.txt"
+    cfg = read_config(path)
+    assert cfg.class_lim == (0.65, 0.80, 0.90)
+    assert cfg.gof_index_effective == 1        # NSE
+    assert cfg.bstype == 0 and cfg.n_resamples == 20000
+    assert cfg.marker == "bo" and cfg.dpi == 100
 
 
 def test_defaults():

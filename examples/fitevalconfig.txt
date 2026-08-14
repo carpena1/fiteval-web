@@ -1,0 +1,12 @@
+0.65 %Acceptable NSE threshold value
+0.80 %Good NSE threshold value
+0.90 %Very good NSE threshold value
+5 %BiasValue
+1 %Select GoF Main Index (1=NSE, 2=KGE*, 3=KGE, 4= E1)
+0 20000 % Bootstrap method (1= Efrons ' bootstrapping, 0= block boostrapping); Nr of resamples
+8 % FontSizeValue
+1 % Do not display graphical output (1=accept)
+0 % % Take into account observations uncertainty (>0,1,2,3 or 4= yes)
+bo % Color and symbol of the series marker
+2 % Size of the series marker
+100 % Resolution of figures in dpi 

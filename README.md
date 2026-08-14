@@ -100,13 +100,42 @@ also echoed to stdout.
 Examples:
 
 ```bash
-python -m fiteval_core data_ex1.in                     # report + PNG/PDF
-python -m fiteval_core data_ex1.in --ext png --seed 42 # + individual PNGs, reproducible
-python -m fiteval_core data_ex3.in --norep --config fitevalconfig.txt
-python -m fiteval_core examples/multi_run_test.txt --multi  # batch: <list>_summary.csv + all runs
+python -m fiteval_core examples/data_ex1.in                          # report + PNG/PDF
+python -m fiteval_core examples/data_ex1.in --ext png --seed 42      # + individual PNGs, reproducible
+python -m fiteval_core examples/data_ex3.in --norep --config examples/fitevalconfig.txt
+python -m fiteval_core examples/multi_run_test.txt --multi --config examples/fitevalconfig.txt
 ```
 
-The repo ships a ready-to-run batch under [`examples/`](examples/):
+### Configuration file (`--config`)
+
+`--config` takes a `fitevalconfig.txt` — the same 12-line file the desktop
+GUI writes (class limits, main index, bootstrap method/resamples, font,
+marker, **dpi**, …); any missing or malformed line falls back to the default.
+A ready-to-edit copy with the defaults is bundled at
+[`examples/fitevalconfig.txt`](examples/fitevalconfig.txt):
+
+```
+0.65 %Acceptable NSE threshold value
+0.80 %Good NSE threshold value
+0.90 %Very good NSE threshold value
+5 %BiasValue
+1 %Select GoF Main Index (1=NSE, 2=KGE*, 3=KGE, 4= E1)
+0 20000 % Bootstrap method (1= Efrons ' bootstrapping, 0= block boostrapping); Nr of resamples
+10 % FontSizeValue
+1 % Do not display graphical output (1=accept)
+0 % % Take into account observations uncertainty (>0,1,2,3 or 4= yes)
+bo % Color and symbol of the series marker
+5 % Size of the series marker
+100 % Resolution of figures in dpi
+```
+
+Only the value(s) at the start of each line are read; the `%` text is a
+comment. To change the main index edit line 5 (e.g. `2` for KGE*) **and**
+put the class limits on that index's scale in lines 1–3 (KGE* defaults
+`0.73 / 0.85 / 0.93`, E1 `0.41 / 0.55 / 0.68`) — see the threshold-scale
+table above.
+
+The repo also ships a ready-to-run batch under [`examples/`](examples/):
 `multi_run_test.txt` (14 rows exercising every uncertainty option) plus the
 `.in`/`.err` files it references. See
 [`examples/README.md`](examples/README.md) for the file list, and
