@@ -254,7 +254,7 @@ def run_multi(rows: list[tuple[str, str]], workspace: str | Path,
 
         base = Path(str(list_name)).name.split(".")[0] if list_name else "mr"
         out.summary_path = safe_join(workspace, f"{base or 'mr'}_summary.csv")
-        with open(out.summary_path, "w") as fid:
+        with open(out.summary_path, "w", encoding="utf-8") as fid:
             fid.write(",".join(band) + "\n")
             fid.write(",".join(header) + "\n")
             for field_str, option, nou, wu, tail in collected:

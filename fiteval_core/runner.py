@@ -44,7 +44,7 @@ def _run_case(case, name: str, outdir: Path, cfg: FitevalConfig,
 
     report = numerical_report(res)
     art.report_txt = outdir / f"{nproy}_out.txt"
-    art.report_txt.write_text(report)
+    art.report_txt.write_text(report, encoding="utf-8")
     art.files.append(art.report_txt)
 
     combined = fig_combined(res, cfg, fig_text)

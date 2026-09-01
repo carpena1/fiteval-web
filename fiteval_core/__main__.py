@@ -26,7 +26,7 @@ from .runner import run_evaluation
 
 def _run_multi(infile: Path, cfg: FitevalConfig,
                rng: np.random.Generator | None) -> int:
-    rows = parse_list_file(infile.read_text())
+    rows = parse_list_file(infile.read_text(encoding="utf-8", errors="replace"))
     if not rows:
         sys.stderr.write(f"No runs found in {infile}\n")
         return 1
@@ -45,6 +45,12 @@ def _run_multi(infile: Path, cfg: FitevalConfig,
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Windows consoles/redirects default to a legacy code page (cp1252, cp850)
+    # that cannot encode the Greek rho/alpha of the timing/amplitude line.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
+
     ap = argparse.ArgumentParser(prog="fiteval_core")
     ap.add_argument("infile", help="input .in data file [Yobs Yprd (Yben)], "
                                     "or a batch list file with --multi")
@@ -73,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     art = run_evaluation(data, infile.name, infile.parent, cfg,
                          no_repeated=args.norep, fig_ext=args.ext,
                          fig_text=args.text, rng=rng)
-    sys.stdout.write(art.report_txt.read_text())
+    sys.stdout.write(art.report_txt.read_text(encoding="utf-8"))
     print("\nFiles written:")
     for f in art.files:
         print(f"  {f}")

@@ -48,7 +48,7 @@ def register(app) -> None:
         if not state:
             return no_update, no_update
         try:
-            text = session_file(sid, _view(state)["txt"]).read_text()
+            text = session_file(sid, _view(state)["txt"]).read_text(encoding="utf-8")
         except (ValueError, KeyError, OSError):
             return no_update, no_update
         return True, text

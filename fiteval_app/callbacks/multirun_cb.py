@@ -104,7 +104,7 @@ def register(app) -> None:
                     continue
                 name = dest.name
                 text = decode_upload(content)
-                dest.write_text(text)
+                dest.write_text(text, encoding="utf-8")
                 saved += 1
                 if name.lower().endswith(LIST_EXTS):
                     list_rows += [{"file": f, "option": o, "logs": ""}

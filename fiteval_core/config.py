@@ -84,7 +84,7 @@ def read_config(path: str | Path) -> FitevalConfig:
     if not path.is_file():
         return FitevalConfig()
     try:
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         cl = list(cfg.class_lim)
         for m in range(3):
             cl[m] = _first_float(lines[m], cl[m])
@@ -127,4 +127,4 @@ def write_config(cfg: FitevalConfig, path: str | Path) -> None:
         f"{fmt(cfg.marker_size)} % Size of the series marker",
         f"{cfg.dpi} % Resolution of figures in dpi ",
     ]
-    Path(path).write_text("\n".join(lines[:-1]) + "\n" + lines[-1])
+    Path(path).write_text("\n".join(lines[:-1]) + "\n" + lines[-1], encoding="utf-8")

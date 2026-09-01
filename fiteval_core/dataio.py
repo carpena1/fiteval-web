@@ -68,14 +68,14 @@ def parse_numeric_text(text: str) -> np.ndarray:
 
 def read_in_file(path: str | Path) -> np.ndarray:
     """Read a .in data file (observed-first column order)."""
-    return parse_numeric_text(Path(path).read_text())
+    return parse_numeric_text(Path(path).read_text(encoding="utf-8", errors="replace"))
 
 
 def write_in_file(data: np.ndarray, path: str | Path) -> None:
     """Write tab-separated %f rows, as writeTofile/SaveDataToFile do."""
     data = np.atleast_2d(np.asarray(data, dtype=float))
     lines = ["\t".join(f"{v:f}" for v in row) for row in data]
-    Path(path).write_text("\n".join(lines) + "\n")
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def swap_first_two(data: np.ndarray) -> np.ndarray:
