@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# FITEVAL web - shortcut that starts the local server from any directory.
+#
+# Unix only (macOS / Linux).  On Windows use scripts\run_local.bat instead:
+# this script relies on a shebang, a POSIX shell and a ~ home path, none of
+# which cmd.exe understands.
+#
+# The path below is absolute so the script also works when symlinked onto
+# PATH (e.g. ln -s .../scripts/fiteval /usr/local/bin/fiteval).  Edit it if
+# your checkout is not at ~/fortran-projects/fiteval_web.
+cd ~/fortran-projects/fiteval_web && ./scripts/run_local.sh
