@@ -5,6 +5,15 @@ Changes needed in the desktop source
 revised copy) to match the current Python app. Line numbers are from that
 copy.
 
+> **Status (2026-11-09): mostly superseded.** The desktop source is now
+> v4.0 (`FITEVAL_GUI.m`, 27 Oct 2026). It already contains **section A**
+> (the E1 threshold conversion, now at L303-327) and **section B** (the
+> two-section summary labels, L989). The line numbers below point at the
+> old Jul-16 copy and no longer match. v4.0 also replaced the rho/alpha
+> diagnostic that this file lists as "already in sync"; the Python port now
+> follows the v4.0 text (`indices.kge_nse_imbalance`). Read the current
+> source before you act on anything below. Section C was not re-checked.
+
 Already in sync (no action): the ρ/α output line (`\rho/\alpha`, L3448/3451),
 the 3 bold output lines, and the 3 earlier bug fixes (L3439, L4164,
 L3447–3452).

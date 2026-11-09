@@ -228,6 +228,24 @@ def test_cf_uniform_obs_on_bound_outside_is_one():
     assert out[0, 2] == pytest.approx(1.0)
 
 
+def test_imbalance_diagnostic_skipped_under_uncertainty():
+    """v4.0 gates the correlation/variability diagnostic on
+    MeasUncertValue==0 (L3455): the same data reports it without
+    uncertainty and stays silent with it."""
+    from fiteval_core.engine import evaluate_case
+
+    x = np.linspace(0, 4 * np.pi, 100)
+    yobs = np.sin(x)
+    yprd = 1.20 * yobs + np.random.default_rng(0).normal(0, 0.30, x.size)
+    data = np.column_stack([yobs, yprd])
+    unc, plain = prepare_unc_cases(data, UncSpec(method="per", per=0.1))
+
+    cfg = FitevalConfig()
+    assert evaluate_case(plain, cfg).imbalance_txt.endswith("overestimated")
+    assert unc.meas_unc != 0
+    assert evaluate_case(unc, cfg).imbalance_txt == ""
+
+
 def test_errfile_cf_ratio_always_in_unit_range():
     """CF/CFmax is a correction factor: it must stay in [0, 1] for any
     asymmetric error file. The former constant CFmax = 0.5 broke this."""

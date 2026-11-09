@@ -127,25 +127,56 @@ def test_dixon_no_outlier():
     assert not dixon_outliers(yobs, yprd).present
 
 
-def test_imbalance_fires_for_damped_amplitude():
-    x = np.linspace(0, 4 * np.pi, 100)
-    yobs = np.sin(x)
-    yprd = 0.3 * np.sin(x)  # perfect timing, damped amplitude: rho/alpha > 1.05
-    idx = _idx(yobs, yprd)
-    txt = kge_nse_imbalance(yobs, yprd, idx[1], idx[2])
-    # text mapping follows the fixed MATLAB source (L3447-3452): rho/alpha>1.05
-    assert "ρ/α=3.333" in txt      # Greek rho/alpha
-    assert txt.startswith("Timing matched but amplitude not captured")
+_X = np.linspace(0, 4 * np.pi, 100)
+_OBS = np.sin(_X)
 
 
-def test_imbalance_fires_for_amplified_amplitude():
-    x = np.linspace(0, 4 * np.pi, 100)
-    yobs = np.sin(x)
-    yprd = 3.0 * np.sin(x)  # rho/alpha < 0.95
-    idx = _idx(yobs, yprd)
-    txt = kge_nse_imbalance(yobs, yprd, idx[1], idx[2])
-    assert "ρ/α=0.333" in txt      # Greek rho/alpha
-    assert txt.startswith("Timing not matched but amplitude captured")
+def _imbalance(yprd):
+    idx = _idx(_OBS, yprd)
+    return kge_nse_imbalance(_OBS, yprd, idx[1], idx[2])
+
+
+def test_imbalance_class_2a_rho_higher_than_alpha():
+    """Damped amplitude: alpha = 0.3, rho = 1, so rho/alpha > 1.05 (L3463)."""
+    txt = _imbalance(0.3 * _OBS)
+    assert txt == ("Variability (\N{GREEK SMALL LETTER ALPHA}) - correlation "
+                   "(\N{GREEK SMALL LETTER RHO}) mismatch: "
+                   "\N{GREEK SMALL LETTER RHO} higher than "
+                   "\N{GREEK SMALL LETTER ALPHA} (1.00 > 0.30)")
+
+
+def test_imbalance_class_2b_underestimated():
+    """alpha < 1 and rho/alpha < 0.95 -> 'and underestimated' (L3470-3474)."""
+    yprd = 0.80 * _OBS + np.random.default_rng(0).normal(0, 0.40, _OBS.size)
+    txt = _imbalance(yprd)
+    assert "higher than \N{GREEK SMALL LETTER RHO}" in txt
+    assert txt.endswith("(0.90 > 0.80) and underestimated")
+
+
+def test_imbalance_class_2c_overestimated():
+    """alpha >= 1 and rho/alpha < 0.95 -> 'and overestimated' (L3476-3480)."""
+    yprd = 1.20 * _OBS + np.random.default_rng(0).normal(0, 0.30, _OBS.size)
+    txt = _imbalance(yprd)
+    assert txt.endswith("(1.21 > 0.94) and overestimated")
+
+
+def test_imbalance_class_1_bias_driven():
+    """rho == alpha == 1 with a pure offset: the gap is bias (L3485-3486)."""
+    txt = _imbalance(_OBS + 0.5)
+    assert txt == ("Correlation (\N{GREEK SMALL LETTER RHO}) "
+                   "\N{ALMOST EQUAL TO} variability "
+                   "(\N{GREEK SMALL LETTER ALPHA}), but bias is non-negligible")
+
+
+def test_imbalance_silent_when_nse_not_positive():
+    """MATLAB gate NSE>0 (L3455): 3x amplitude gives NSE=-3, so no text."""
+    assert _idx(_OBS, 3.0 * _OBS)[1] < 0
+    assert _imbalance(3.0 * _OBS) == ""
+
+
+def test_imbalance_silent_inside_envelope():
+    """A good fit sits inside the KGE* envelope and says nothing."""
+    assert _imbalance(_OBS + 0.01 * np.cos(_X)) == ""
 
 
 def test_imbalance_silent_for_good_fit():

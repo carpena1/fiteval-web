@@ -161,37 +161,51 @@ def dixon_outliers(yobs, yprd) -> OutlierResult:
 
 
 def kge_nse_imbalance(yobs, yprd, nse: float, kge_star: float) -> str:
-    """Timing/amplitude imbalance diagnostic (L3438-3456); '' when balanced.
+    """Correlation/variability imbalance diagnostic (L3453-3489).
 
-    Only meaningful for j=2 indices; caller must skip for E1.
+    Returns '' when the fit sits inside the KGE* envelope, else one of the
+    four v4.0 classes:
+      class 1   rho ~ alpha, so the gap to the envelope is bias-driven
+      class 2a  rho higher than alpha
+      class 2b  alpha higher than rho, and underestimated (alpha < 1)
+      class 2c  alpha higher than rho, and overestimated  (alpha >= 1)
 
-    In sync with the fixed MATLAB source (L3439): NSE=GoF_IDXS(2),
-    KGE_star=GoF_IDXS(3), i.e. nse=GoF_IDXS[1], kge_star=GoF_IDXS[2]
-    (0-based), matching the envelope formulas (comments "KGE* lower/upper
-    bound"), which are functions of NSE.
-    For NSE<0 (or negative envelope arguments) MATLAB silently continues in
-    complex arithmetic and its comparisons use real parts; cmath reproduces
-    that exactly.
+    The caller applies the two outer gates MATLAB keeps in the same `if`:
+    j=2 (so not E1) and no measurement uncertainty.
+
+    NSE=GoF_IDXS(2), KGE_star=GoF_IDXS(3), i.e. nse=GoF_IDXS[1],
+    kge_star=GoF_IDXS[2] (0-based), matching the envelope formulas
+    (comments "KGE* lower/upper bound"), which are functions of NSE.
+    Where an envelope argument turns negative MATLAB continues silently in
+    complex arithmetic and compares real parts; cmath reproduces that.
     """
     import cmath
 
     yobs = np.asarray(yobs, dtype=float)
     yprd = np.asarray(yprd, dtype=float)
-    if not np.isfinite(nse) or not np.isfinite(kge_star):
+    # MATLAB gate NSE>0 (L3455); a NaN index fails it there and here
+    if not np.isfinite(nse) or not np.isfinite(kge_star) or nse <= 0:
         return ""
     sq_nse = cmath.sqrt(nse)
     y_lb = (1 - cmath.sqrt(1.911 * nse - 3.909 * sq_nse + 2)).real
     y_ub = (1 - cmath.sqrt(2.114 * nse - 4.111 * sq_nse + 2)).real
-    if kge_star < 0.95 and (kge_star > y_ub or kge_star < y_lb):
-        r = float(np.corrcoef(yprd, yobs)[1, 0])
-        alpha = np.std(yprd, ddof=1) / np.std(yobs, ddof=1)
-        r2a = r / alpha
-        if r > 0.6 and r2a < 0.95:
-            return (f"Timing not matched but amplitude captured "
-                    f"(\N{GREEK SMALL LETTER RHO}/"
-                    f"\N{GREEK SMALL LETTER ALPHA}={r2a:.3f})")
-        if r > 0.6 and r2a > 1.05:
-            return (f"Timing matched but amplitude not captured "
-                    f"(\N{GREEK SMALL LETTER RHO}/"
-                    f"\N{GREEK SMALL LETTER ALPHA}={r2a:.3f})")
-    return ""
+    if not (kge_star < 0.95 and (kge_star > y_ub or kge_star < y_lb)):
+        return ""
+
+    r = float(np.corrcoef(yprd, yobs)[1, 0])
+    # keep alpha a numpy scalar: a zero spread must give inf/nan, not raise
+    alpha = np.std(yprd, ddof=1) / np.std(yobs, ddof=1)
+    r2a = r / alpha
+
+    rho = "\N{GREEK SMALL LETTER RHO}"
+    al = "\N{GREEK SMALL LETTER ALPHA}"
+    # tested in MATLAB's order, so a NaN ratio falls through to class 1
+    if abs(1 - r2a) > 0.05:
+        head = f"Variability ({al}) - correlation ({rho}) mismatch: "
+        if r2a > 1.05:
+            return head + f"{rho} higher than {al} ({r:.2f} > {alpha:.2f})"
+        tail = "underestimated" if alpha < 1 else "overestimated"
+        return (head + f"{al} higher than {rho} ({alpha:.2f} > {r:.2f})"
+                f" and {tail}")
+    return (f"Correlation ({rho}) \N{ALMOST EQUAL TO} variability ({al}), "
+            f"but bias is non-negligible")
