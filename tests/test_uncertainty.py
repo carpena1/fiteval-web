@@ -187,6 +187,64 @@ def test_errfile_with_benchmark_converts_to_cf():
     assert unc.yben is not None and plain.yben is not None
 
 
+def _cf_of(unc):
+    return unc.yerr / (unc.yobs - unc.yprd)
+
+
+def test_errfile_cf_asymmetric_bounds_sidewise_cfmax():
+    """Option 2 with asymmetric lengths: CFmax is F(O) below O and 1-F(O)
+    above it (as compute_cf), so CF stays in [0, 1] and is 1 outside."""
+    data = np.array([[10.0, 9.0], [10.0, 10.5], [10.0, 11.5], [10.0, 7.0]])
+    err = np.array([[2.0, 1.0]] * 4)  # bounds [8, 11], F(O) = 2/3
+    unc, _ = prepare_unc_cases(data, UncSpec(method="errfile", err_data=err,
+                                             err_as_cf=True))
+    # P=9: (2/3-1/3)/(2/3)=0.5; P=10.5: (5/6-2/3)/(1/3)=0.5; outside -> 1
+    np.testing.assert_allclose(_cf_of(unc), [0.5, 0.5, 1.0, 1.0])
+    np.testing.assert_allclose(unc.yerr, [0.5, -0.25, -1.5, 3.0])
+
+
+def test_errfile_cf_symmetric_bounds_unchanged():
+    """Symmetric lengths: F(O)=0.5, the same CF as the former CF/0.5."""
+    data = np.array([[10.0, 10.5], [10.0, 9.0], [10.0, 12.0]])
+    err = np.array([[1.0, 1.0]] * 3)
+    unc, _ = prepare_unc_cases(data, UncSpec(method="errfile", err_data=err,
+                                             err_as_cf=True))
+    np.testing.assert_allclose(_cf_of(unc), [0.5, 1.0, 1.0])
+
+
+def test_errfile_cf_obs_on_bound():
+    """O on the lower bound (len1 = 0): P below is outside -> CF 1, not 0/0."""
+    data = np.array([[10.0, 9.0], [10.0, 11.0]])
+    err = np.array([[0.0, 2.0]] * 2)  # bounds [10, 12], F(O) = 0
+    unc, _ = prepare_unc_cases(data, UncSpec(method="errfile", err_data=err,
+                                             err_as_cf=True))
+    np.testing.assert_allclose(_cf_of(unc), [1.0, 0.5])
+
+
+def test_cf_uniform_obs_on_bound_outside_is_one():
+    """compute_cf, uniform: O on the lower bound and P below it -> 1."""
+    out = compute_cf(9, 4, 0, np.array([10.0]), np.array([9.0]), None,
+                     None, None, lubo=np.array([10.0]), uubo=np.array([12.0]))
+    assert out[0, 2] == pytest.approx(1.0)
+
+
+def test_errfile_cf_ratio_always_in_unit_range():
+    """CF/CFmax is a correction factor: it must stay in [0, 1] for any
+    asymmetric error file. The former constant CFmax = 0.5 broke this."""
+    rng = np.random.default_rng(7)
+    n = 200
+    yobs = rng.uniform(1.0, 50.0, n)
+    yprd = yobs + rng.normal(0.0, 8.0, n)          # some predictions outside
+    err = np.column_stack([rng.uniform(0.5, 10.0, n),   # lower length
+                           rng.uniform(0.5, 10.0, n)])  # upper length
+    data = np.column_stack([yobs, yprd])
+    unc, _ = prepare_unc_cases(data, UncSpec(method="errfile", err_data=err,
+                                             err_as_cf=True))
+    cf = unc.yerr / (unc.yobs - unc.yprd)
+    assert np.isfinite(cf).all()
+    assert cf.min() >= 0.0 and cf.max() <= 1.0
+
+
 def test_errfile_row_mismatch():
     with pytest.raises(UncError, match="rows"):
         prepare_unc_cases(_data(10), UncSpec(method="errfile",

@@ -236,6 +236,12 @@ def compute_cf(case: int, obs_dist: int, prd_dist: int,
         cf[nan_ix] = cfmax[nan_ix]
         with np.errstate(divide="ignore", invalid="ignore"):
             cf_cfmax = cf / cfmax
+        if dist in (3, 4):
+            # prediction outside the support [lub, uub]: CF/CFmax = 1 (the
+            # limit of the ratio); avoids 0/0 when the observation lies on a
+            # bound (CFmax = 0). Degenerate bounds (uub <= lub) stay NaN.
+            out_ix = (uub > lub) & ((y < lub) | (y > uub))
+            cf_cfmax = np.where(out_ix, 1.0, cf_cfmax)
         cols = [obs, prd] + ([bch] if bch is not None else []) \
             + [cf_cfmax, lub, uub]
         return np.column_stack(cols)
@@ -333,7 +339,18 @@ def _per_to_cf(data: np.ndarray, len1: np.ndarray, len2: np.ndarray
     ub = yobs + len2
     cdf_o = unifcdf(yobs, lb, ub)
     cf = np.abs(cdf_o - unifcdf(yprd, lb, ub))
-    cf_cfmax = cf / 0.5  # symmetric PDF => CFmax=0.5
+    # CFmax on the side of the prediction, as in compute_cf: F(O) below O and
+    # 1 - F(O) above it. The former constant 0.5 holds only for symmetric
+    # bounds (len1 == len2), where F(O) = 0.5 and the result is unchanged;
+    # with asymmetric bounds it gave CF > 1 inside the interval and CF < 1
+    # outside it. A prediction outside [lb, ub] gets CF/CFmax = 1 (the limit
+    # of the ratio; avoids 0/0 when O lies on a bound).
+    cfmax = np.where(yprd > yobs, 1.0 - cdf_o, cdf_o)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        cf_cfmax = cf / cfmax
+    valid = ub > lb                      # degenerate bounds stay NaN (unifcdf)
+    cf_cfmax = np.where(valid & (yprd == yobs), 0.0, cf_cfmax)
+    cf_cfmax = np.where(valid & ((yprd < lb) | (yprd > ub)), 1.0, cf_cfmax)
     if data.shape[1] == 2:
         return np.column_stack([yobs, yprd, cf_cfmax, lb, ub])
     return np.column_stack([yobs, yprd, data[:, 2], cf_cfmax, lb, ub])
