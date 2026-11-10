@@ -14,7 +14,7 @@ from .uncertainty_panel import uncertainty_panel
 
 ABOUT_LINES = [
     "PROGRAM FOR MODEL GOODNESS-OF-FIT EVALUATION",
-    "v3.0 (web)",
+    "v4.0 (web)",
     "(c)2011 - Axel Ritter & Rafael Muñoz-Carpena",
     "Universidad de La Laguna & University of Florida",
     "aritter@ull.es & carpena@ufl.edu",
