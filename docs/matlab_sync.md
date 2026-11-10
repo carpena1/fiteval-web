@@ -1,253 +1,196 @@
-# MATLAB sync spec — changes to `FITEVAL_GUI.m`
+# MATLAB sync — `FITEVAL_GUI.m` v4.0 and the Python port
 
-Changes needed in the desktop source
-(`FITEVAL_GUI_src/FITEVAL_GUI_Installer_files/FITEVAL_GUI.m`, the Jul-16
-revised copy) to match the current Python app. Line numbers are from that
-copy.
+This file shows where the desktop program and the Python port still differ.
+It also gives the changes to make in the desktop source.
 
-> **Status (2026-11-09): mostly superseded.** The desktop source is now
-> v4.0 (`FITEVAL_GUI.m`, 27 Oct 2026). It already contains **section A**
-> (the E1 threshold conversion, now at L303-327) and **section B** (the
-> two-section summary labels, L989). The line numbers below point at the
-> old Jul-16 copy and no longer match. v4.0 also replaced the rho/alpha
-> diagnostic that this file lists as "already in sync"; the Python port now
-> follows the v4.0 text (`indices.kge_nse_imbalance`). Read the current
-> source before you act on anything below. Section C was not re-checked.
+- Desktop source:
+  `FITEVAL_GUI_src/FITEVAL_GUI_Installer_files/FITEVAL_GUI.m`, version 4.0
+  (27 Oct 2026), with the CF fix of 9 Nov 2026 applied.
+- Python port: `fiteval_core`.
+- Line numbers come from that desktop file. They move when you edit it, so
+  check each one before you change the code.
+- Checked on 2026-11-10.
 
-Already in sync (no action): the ρ/α output line (`\rho/\alpha`, L3448/3451),
-the 3 bold output lines, and the 3 earlier bug fixes (L3439, L4164,
-L3447–3452).
+An earlier version of this file listed three gaps, A, B and C. Version 4.0
+closed gap A and most of gap B. That older text is gone. Use the table below.
 
-Three behaviours still diverge:
+## Status
 
-- **A. E1 threshold conversion** — small, localized.
-- **B. Two-section multi-run summary CSV** — structural.
-- **C. Forced-NSE reclassification** of the with-uncertainty run — part of B.
-
----
-
-## A. E1 threshold conversion (`GoFIndexSelection`, L299–312)
-
-MATLAB currently knows only the NSE↔KGE pair and treats **E1 as identical to
-NSE** (switching NSE→E1 does nothing; KGE*→E1 stops at NSE). The app converts
-E1 with `E1 = 1 − √(1 − NSE)`, pivoting every conversion through NSE.
-
-**Replace L299–312** with:
-
-```matlab
-      function GoFIndexSelection(~,~)
-        % Convert the three class limits between index scales. NSE(1),
-        % KGE*/KGE(2,3) and E1(4) are three distinct scales, so every
-        % conversion pivots through NSE:
-        %   NSE->KGE: 1-sqrt(2)*(1-sqrt(NSE));  KGE->NSE: 0.5*(sqrt(2)-(1-KGE))^2
-        %   NSE->E1 : 1-sqrt(1-NSE);            E1->NSE : 1-(1-E1)^2
-        val=c_GoFIndex.Value;
-        scal=[1 2 2 4];                 % scale id per index: NSE / KGE / E1
-        if scal(preval)~=scal(val)
-          for aa=1:3
-            x=str2double(cV(aa).String);
-            if     scal(preval)==2, nse=0.5*(sqrt(2)-(1-x)).^2;  % KGE -> NSE
-            elseif scal(preval)==4, nse=1-(1-x).^2;              % E1  -> NSE
-            else                    nse=x;                       % NSE
-            end
-            if     scal(val)==2, x=1-sqrt(2).*(1-sqrt(nse));     % NSE -> KGE
-            elseif scal(val)==4, x=1-sqrt(1-nse);                % NSE -> E1
-            else                 x=nse;                          % NSE
-            end
-            cV(aa).String=sprintf('%.2f',x);
-          end% aa
-        end
-        preval=val;
-       end %e - GoFIndexSelection
-```
-
-Result matches the app: NSE `0.65/0.80/0.90` → E1 `0.41/0.55/0.68`; the
-two-step KGE*→E1 gives `0.41/0.55/0.69` (the +0.01 on the top limit is the
-2-decimal pivot-rounding drift, inherent unless limits are stored in NSE).
-No other site changes: classification compares the computed E1 against these
-displayed limits.
+| Item | Desktop v4.0 | Python port | Action |
+|------|--------------|-------------|--------|
+| E1 threshold conversion | done, L300 | done | none |
+| Two-section summary layout | done, L978–L1016 | done | none |
+| Summary band row | **one column out**, L989 | correct | fix the desktop |
+| Column order in each block | Indicator before p-value | Indicator last | choose one |
+| Force NSE for the uncertainty pass | **missing** | done | fix the desktop |
+| CF from an external error file | done, L3028 | done | test the desktop |
+| `computeCF` 0/0 guard | done, L5302 | done | test the desktop |
+| Correlation/variability text | v4.0 text, L3463 | follows v4.0 | none |
+| Greek letters in the report file | writes `rho`, `alpha` | writes ρ, α | cosmetic |
 
 ---
 
-## B + C. Two-section multi-run summary + forced-NSE
+## Open 1 — the summary band row is one column out
 
-### The gap
+The summary file has 23 columns. The first row is the band row. It says which
+columns hold the run without measurement uncertainty, and which hold the run
+with it.
 
-MATLAB's multi-run (`MR_RunButtonPushed`, L846–1027) runs **each case once**
-and writes a **single-section** summary (header built at L953–967, one row
-per case appended at L952, CSV written at L977–983).
+The data sits like this:
 
-The app runs each **uncertainty** case **twice** — deterministic *and*
-with-uncertainty — and writes a **two-section** CSV: a **No Unc.** block
-(always) and a **With Unc.** block (only if at least one row has an
-uncertainty option). Rows with no uncertainty show `--` in the With Unc.
-block. The with-uncertainty run is forced to **NSE** and classified against
-NSE-scale limits when the configured index is KGE*/KGE (kept as E1 when E1 is
-selected).
+| Columns | Content |
+|---------|---------|
+| 1–2 | Case, Option |
+| 3–12 | run **without** uncertainty (10 columns) |
+| 13–20 | run **with** uncertainty (8 columns) |
+| 21–23 | Bias, Outlier, N |
 
-### Target layout (authoritative: `fiteval_core/multirun.py`)
+The code proves it:
 
-Band row (line 1) and header row (line 2), joined by `,` with **no trailing
-comma**:
+- L3322–L3329 fills `NUMOUT{1..10}` from the run without uncertainty, and
+  `NUMOUT{19,20,21}` from the last three values of that same run.
+- L3296–L3299 fills `NUMOUT{11,12}` and `NUMOUT{13..18}` from the run with
+  uncertainty.
+- L985 puts Case and Option in front. So `NUMOUT{k}` becomes column `k+2`.
 
-```
-,,No Unc.×10,[With Unc.×8],,,                      <- band row
-Case,Option,<idx1>,<idx1> 95%CI,<idx2>,<idx2> 95%CI,RMSE,RMSE 95%CI,NRMSE,p-value,threshold,Indicator,[<uidx>,<uidx> 95%CI,RMSE,RMSE 95%CI,NRMSE,p-value,threshold,Indicator,]Bias,Outlier,N
-```
-
-Labels by `GoF_Index_Flag`:
-
-| | flag 1 (NSE) | flag 2 (KGE*) | flag 3 (KGE) | flag 4 (E1) |
-|---|---|---|---|---|
-| `idx1` | NSE | NSE | NSE | E_1 |
-| `idx2` | KGE* | KGE* | KGE | KGE* |
-| `uidx` (With Unc.) | NSE | NSE | NSE | E_1 |
-
-The No Unc. section has **one** Indicator column (= configured index label);
-the reference CSV `revised_multirun_table.csv` had a duplicate Indicator that
-the app dropped — match the app, i.e. 10 No-Unc columns.
-
-Cell sources, in terms of the existing `NUMOUT{1..12}`
-(`{1}`idx1 `{2}`idx1CI `{3}`idx2 `{4}`idx2CI `{5}`RMSE `{6}`RMSECI
-`{7}`p-value `{8}`threshold `{9}`NRMSE `{10}`bias `{11}`outlier `{12}`N):
-
-- **No Unc. (10)** from the deterministic run `Nd`:
-  `Nd{1} Nd{2} Nd{3} Nd{4} Nd{5} Nd{6} Nd{9} Nd{7} Nd{8}` + `idx1_label`
-  (note the reorder: NRMSE before p-value/threshold, and Indicator appended).
-- **With Unc. (8)** from the uncertainty run `Nu`:
-  `Nu{1} Nu{2} Nu{5} Nu{6} Nu{9} Nu{7} Nu{8}` + `uidx_label`.
-  Blank fill for a no-uncertainty row: `{'--','','--','','--','--','--','--'}`.
-- **Tail (3)** from the deterministic run: `Nd{10} Nd{11} Nd{12}`.
-
-### B1. Run each case twice; collect, then write once
-
-Restructure the loop body (L881–992) so that, per case:
-
-1. Run the **deterministic** pass with uncertainty fully off
-   (`MR_MixedMethod=0`, `DATA_CASE_5_8=[]`, uncertainty button 0), capture
-   `Nd = NUMOUT`, and record `idx1_label = indexlabel{1}`.
-2. If the option is not `0`, set up uncertainty (as today for `1`/`2` at
-   L916–946; see the caveat below for `3`/`4`), apply the forced-NSE override
-   (B2), run the **uncertainty** pass, capture `Nu = NUMOUT` and
-   `uidx_label = indexlabel{1}`, then restore the override.
-3. Store `{fldStr, Option, Nd, Nu-or-[]}` in an accumulator and set
-   `anyUnc = anyUnc || ~isempty(Nu)`.
-
-Move the CSV write **out of the loop** to after L993 (currently it rewrites
-the file every iteration, which cannot know `anyUnc` for later rows). Each
-`Run_Callback` call resets `NUMOUT=[]` before running, since `NUMOUT` is
-built only `if isempty(NUMOUT)` (L3726).
-
-### B2. Forced-NSE override for the uncertainty pass
-
-Immediately before the uncertainty `Run_Callback`:
+The band row at L989 says something different:
 
 ```matlab
-    fFlag=GoF_Index_Flag; fCL=CLASSLIM;          % save
-    if GoF_Index_Flag==2 || GoF_Index_Flag==3    % KGE*/KGE -> NSE
-      GoF_Index_Flag=1;
-      CLASSLIM=0.5*(sqrt(2)-(1-CLASSLIM)).^2;    % KGE-scale -> NSE-scale
-    end
+UNCCONDLBL=cell(1,21); UNCCONDLBL(:)={''};
+UNCCONDLBL(3:11)={'No Unc.'};UNCCONDLBL(12:20)={'With Unc.'};
 ```
 
-and immediately after it:
+Column 12 holds the threshold of the run **without** uncertainty. The band row
+marks it "With Unc.". Every label in the second block is one column early. The
+cell is also too short: it holds 21 entries for a 23-column header.
+
+Replace both lines with:
 
 ```matlab
-    GoF_Index_Flag=fFlag; CLASSLIM=fCL;          % restore
+UNCCONDLBL=cell(1,23); UNCCONDLBL(:)={''};
+UNCCONDLBL(3:12)={'No Unc.'}; UNCCONDLBL(13:20)={'With Unc.'};
 ```
 
-(NSE and E1 configs need no forcing — the uncertainty run already reports NSE
-or E1 respectively.) `GoF_Index_Flag` and `CLASSLIM` are the globals declared
-at L490.
+The header row itself (L991–L1016) is correct. Only the band row is wrong.
 
-### B3. Header — replace L953–967
+---
+
+## Open 2 — force NSE for the uncertainty pass
+
+When the user selects KGE* or KGE, the port evaluates the uncertainty run as
+NSE, against NSE-scale class limits. The desktop does not do this.
+
+The desktop swaps columns instead, at L978–L983:
 
 ```matlab
-            idx1lbl='NSE'; if GoF_Index_Flag==4, idx1lbl='E_1'; end
-            idx2lbl='KGE*'; if GoF_Index_Flag==3, idx2lbl='KGE'; end
-            uidxlbl=idx1lbl;   % NSE, or E_1 when E1 selected
-            j=1;
-            NUMOUTLBL{j}='Case'; j=j+1;
-            NUMOUTLBL{j}='Option'; j=j+1;
-            NUMOUTLBL{j}=idx1lbl; j=j+1;
-            NUMOUTLBL{j}=[idx1lbl ' 95%CI']; j=j+1;
-            NUMOUTLBL{j}=idx2lbl; j=j+1;
-            NUMOUTLBL{j}=[idx2lbl ' 95%CI']; j=j+1;
-            NUMOUTLBL{j}='RMSE'; j=j+1;
-            NUMOUTLBL{j}='RMSE 95%CI'; j=j+1;
-            NUMOUTLBL{j}='NRMSE'; j=j+1;
-            NUMOUTLBL{j}='p-value'; j=j+1;
-            NUMOUTLBL{j}='threshold'; j=j+1;
-            NUMOUTLBL{j}='Indicator'; j=j+1;
-            if anyUnc
-              NUMOUTLBL{j}=uidxlbl; j=j+1;
-              NUMOUTLBL{j}=[uidxlbl ' 95%CI']; j=j+1;
-              NUMOUTLBL{j}='RMSE'; j=j+1;
-              NUMOUTLBL{j}='RMSE 95%CI'; j=j+1;
-              NUMOUTLBL{j}='NRMSE'; j=j+1;
-              NUMOUTLBL{j}='p-value'; j=j+1;
-              NUMOUTLBL{j}='threshold'; j=j+1;
-              NUMOUTLBL{j}='Indicator'; j=j+1;
-            end
-            NUMOUTLBL{j}='Bias'; j=j+1;
-            NUMOUTLBL{j}='Outlier'; j=j+1;
-            NUMOUTLBL{j}='N';
+if strcmp(indexlabel{1},'KGE*') || strcmp(indexlabel{1},'KGE')
+    NUMOUT=[NUMOUT(:,3:4) NUMOUT(:,1:2) NUMOUT(:,5:end)];
+    idx1lbl=indexlabel{2}; idx2lbl=indexlabel{1};
 ```
 
-### B4. Band row, row assembly and writer — replace L977–983
+The swap moves columns 1–4 only. `NUMOUT(:,5:end)` keeps columns 11 and 12
+where they are, and those two columns carry the main index of the uncertainty
+run. The result:
 
-Build each row from the stored `Nd`/`Nu`, then write once:
+- Columns 3–6 read NSE, then KGE. This is correct.
+- Columns 13–14 still hold the **KGE** value of the uncertainty run. The
+  header calls them `idx1lbl`, which the swap has just set to NSE. The label
+  does not match the number.
+
+To fix it, force the index around the uncertainty run. Replace L3294:
 
 ```matlab
-      band=[{'',''}, repmat({'No Unc.'},1,10)];
-      if anyUnc, band=[band repmat({'With Unc.'},1,8)]; end
-      band=[band {'','',''}];
-
-      ALLNUMOUT={};
-      for ii=1:numel(rows)   % rows: the per-case accumulator from B1
-        Nd=rows(ii).Nd; Nu=rows(ii).Nu;
-        nou={Nd{1},Nd{2},Nd{3},Nd{4},Nd{5},Nd{6},Nd{9},Nd{7},Nd{8},rows(ii).idx1lbl};
-        if isempty(Nu)
-          wu={'--','','--','','--','--','--','--'};
-        else
-          wu={Nu{1},Nu{2},Nu{5},Nu{6},Nu{9},Nu{7},Nu{8},rows(ii).uidxlbl};
-        end
-        tail={Nd{10},Nd{11},Nd{12}};
-        if anyUnc
-          ALLNUMOUT(ii,:)=[{rows(ii).Case,rows(ii).Option}, nou, wu, tail];
-        else
-          ALLNUMOUT(ii,:)=[{rows(ii).Case,rows(ii).Option}, nou, tail];
-        end
-      end
-
-      fid=fopen(pathMRSummFnm,'w');
-      fprintf(fid,'%s\n', strjoin(band,','));
-      fprintf(fid,'%s\n', strjoin(NUMOUTLBL,','));
-      for ii=1:size(ALLNUMOUT,1)
-        fprintf(fid,'%s\n', strjoin(ALLNUMOUT(ii,:),','));
-      end
-      fclose(fid);
+   OUTP=fitevaluation(Yobs,Yprd,Yben,GoF_Index_Flag,repeated_cases,handles);
 ```
 
-`strjoin` gives the no-trailing-comma format the app writes (MATLAB's current
-`fprintf('%s,',...)` appends a stray comma — dropping it is required for
-byte-identical CSVs).
+with:
 
-### Caveats — verify on the MATLAB side
+```matlab
+   fFlag=GoF_Index_Flag; fCL=CLASSLIM;          % save
+   if GoF_Index_Flag==2 || GoF_Index_Flag==3    % KGE*/KGE -> NSE
+     GoF_Index_Flag=1;
+     CLASSLIM=0.5*(sqrt(2)-(1-CLASSLIM)).^2;    % KGE scale -> NSE scale
+   end
+   OUTP=fitevaluation(Yobs,Yprd,Yben,GoF_Index_Flag,repeated_cases,handles);
+   GoF_Index_Flag=fFlag; CLASSLIM=fCL;          % restore
+```
 
-1. **Options `3`/`4` (CF-from-distribution) in multi-run.** The current loop
-   only wires up error files for options `1`/`2` (L916). The deterministic +
-   uncertainty split assumes the option string is parsed and the CF
-   distribution parameters (`OptCase`, obs/prd distributions and values) are
-   applied the same way single-run mode does. Confirm `Run_Callback` builds
-   the CF from `UncStrRead`/`OptCase` for `3`/`4` under multi-run, or route it
-   through the same setup single-run uses.
-2. **Deterministic pass must be genuinely uncertainty-free.** Ensure the first
-   pass has `MR_MixedMethod=0` and `DATA_CASE_5_8=[]` so `Nd` is the plain
-   evaluation even when the option carries uncertainty.
-3. **`NUMOUT` capture.** `NUMOUT` is global and built only when empty
-   (L3726); set `NUMOUT=[]` before each `Run_Callback` and copy it out
-   immediately after.
-4. Untested here (no MATLAB runtime) — treat the B code as a structural
-   blueprint and validate against the app's `<list>_summary.csv` on
-   `multi_run_test.txt` with KGE* selected.
+`CLASSLIM` is global (L516, and again inside `fitevaluation` at L3364).
+`GoF_Index_Flag` is global as well, but `fitevaluation` also takes it as an
+argument, so the call above passes the forced value.
+
+An NSE or E1 configuration needs no forcing. The uncertainty run already
+reports NSE or E1 there.
+
+---
+
+## Choose one — column order inside each block
+
+Both programs put the same ten values in the block without uncertainty, and
+the same eight in the block with it. They order the last three differently.
+
+| Position in block | Desktop v4.0 (L3754–L3766) | Python port |
+|-------------------|----------------------------|-------------|
+| 8 | Indicator | p-value |
+| 9 | p-value | threshold |
+| 10 | threshold | Indicator |
+
+Each program is correct on its own: in both, the header matches the data. But
+a file written by one does not load into a reader built for the other.
+
+The desktop format is the reference, so the port should follow v4.0. In
+`fiteval_core/multirun.py`, move `primary` and `label` before the p-value in
+`_no_unc_cells` and `_with_unc_cells`, and move `"Indicator"` to match in the
+two header lists. `_WITH_UNC_BLANK` needs no change, because its last three
+entries are all `--`.
+
+---
+
+## Already in sync
+
+**E1 threshold conversion** (L300–L330). v4.0 converts the three class limits
+between all four scales, and pivots every conversion through NSE. It converts
+E1 to KGE in one step, so no rounding happens in between.
+
+**Two-section summary layout** (L978–L1016, L3296–L3329). v4.0 runs each case
+twice, keeps both results, and writes the two blocks described above. Only the
+band row and the column order still need attention.
+
+**CF from an external error file** (L3028). An error file with two columns
+gives a lower and an upper bound length that differ, so the uniform
+distribution around the observation is not symmetric and `CDF(O)` is not 0.5.
+Both programs used to divide by a constant 0.5 anyway, which pushed
+`CF/CFmax` outside the range 0 to 1. Both now take `CFmax` on the side where
+the prediction lies: `F(O)` below the observation and `1 - F(O)` above it.
+This is the rule `computeCF` already used for the triangular and uniform
+distributions (L5279). Only two-column error files change.
+
+**`computeCF` 0/0 guard** (L5302). When the observation sits exactly on a
+bound, `CFmax` is 0 and the division gives 0/0. A prediction outside the
+bounds now gets `CF/CFmax = 1`, which is the limit of the ratio.
+
+**Correlation/variability text** (L3463–L3499). v4.0 replaced the older
+"Timing ... amplitude ..." wording with four classes, and dropped the
+`rho > 0.6` condition. The port follows the v4.0 text and classes. v4.0 also
+hides the text when measurement uncertainty is on, and the port does the same.
+
+---
+
+## Cosmetic difference
+
+The desktop writes the diagnostic twice. The figure gets TeX markup, which
+draws Greek letters. The report file gets the same string with the backslashes
+removed (L4004), so the file reads `rho` and `alpha`. The port writes the
+Greek letters in both places. The numbers are identical. Change the port only
+if you compare the two report files character by character.
+
+---
+
+## Test the desktop before you trust it
+
+The two CF changes of 9 Nov 2026 were written without MATLAB on hand. Their
+logic was checked by copying the patched block into Python and comparing it
+with the port over 5000 random cases, which matched exactly. The MATLAB
+**syntax** was never executed. Run one case with a two-column error file
+before you rely on it. The file before those two changes is kept at
+`_backup_2026-11-09/FITEVAL_GUI_v4.0_pre_CF_fix.m`.
