@@ -85,3 +85,17 @@ def test_threshold_scale_pivot_nse_kge_e1():
     assert conv(0.73, 2, 4) == 0.41
     # E1 -> NSE recovers the NSE limits
     assert [conv(t, 4, 1) for t in (0.41, 0.55, 0.68)] == [0.65, 0.8, 0.9]
+
+
+def test_about_modal_lists_both_references_with_links():
+    """The About box cites both papers, each as its own DOI hyperlink."""
+    from fiteval_app.layout.main import REFERENCES, _about_modal
+
+    rendered = str(_about_modal())
+    assert "References:" in rendered
+    dois = ["10.1016/j.jhydrol.2012.12.004", "10.1016/j.envsoft.2026.107239"]
+    assert [d for _, u in REFERENCES for d in dois if d in u] == dois
+    for text, url in REFERENCES:
+        assert text in rendered          # citation shown
+        assert url in rendered           # and hyperlinked
+        assert url.startswith("https://doi.org/")

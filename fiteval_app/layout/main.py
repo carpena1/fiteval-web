@@ -19,7 +19,14 @@ ABOUT_LINES = [
     "Universidad de La Laguna & University of Florida",
     "aritter@ull.es & carpena@ufl.edu",
 ]
-REF_URL = "https://doi.org/10.1016/j.jhydrol.2012.12.004"
+REFERENCES = [
+    ("Ritter and Mu\N{LATIN SMALL LETTER N WITH TILDE}oz-Carpena. 2013. "
+     "J. Hydrol. 480, doi:10.1016/j.jhydrol.2012.12.004",
+     "https://doi.org/10.1016/j.jhydrol.2012.12.004"),
+    ("Ritter and Mu\N{LATIN SMALL LETTER N WITH TILDE}oz-Carpena. 2026. "
+     "Env. Mod. & Softw. 107239. doi: 10.1016/j.envsoft.2026.107239",
+     "https://doi.org/10.1016/j.envsoft.2026.107239"),
+]
 HELP_URL = "https://abe.ufl.edu/carpena/software/fiteval/"
 
 
@@ -32,10 +39,10 @@ def _about_modal() -> dbc.Modal:
                             "margin": "0 auto 12px"}),
             *[html.P(t, className="mb-1 text-center small")
               for t in ABOUT_LINES],
-            html.P(html.A("Ref.: Ritter and Muñoz-Carpena. 2013. "
-                          "J. Hydrol. 480, doi:10.1016/j.jhydrol.2012.12.004",
-                          href=REF_URL, target="_blank"),
-                   className="text-center small mt-2"),
+            html.P("References:", className="text-center small mt-2 mb-1"),
+            *[html.P(html.A(text, href=url, target="_blank"),
+                     className="text-center small mb-1")
+              for text, url in REFERENCES],
         ]),
     ], id="about-modal", is_open=False)
 

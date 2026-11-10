@@ -18,15 +18,16 @@ closed gap A and most of gap B. That older text is gone. Use the table below.
 
 | Item | Desktop v4.0 | Python port | Action |
 |------|--------------|-------------|--------|
-| E1 threshold conversion | done, L300 | done | none |
-| Two-section summary layout | done, L978–L1016 | done | none |
-| Summary band row | **one column out**, L989 | correct | fix the desktop |
+| E1 threshold conversion | done, L313 | done | none |
+| Two-section summary layout | done, L991–L1029 | done | none |
+| Summary band row | **one column out**, L1002 | correct | fix the desktop |
 | Column order in each block | Indicator before p-value | Indicator last | choose one |
 | Force NSE for the uncertainty pass | **missing** | done | fix the desktop |
-| CF from an external error file | done, L3028 | done | test the desktop |
-| `computeCF` 0/0 guard | done, L5302 | done | test the desktop |
-| Correlation/variability text | v4.0 text, L3463 | follows v4.0 | none |
+| CF from an external error file | done, L3041 | done | test the desktop |
+| `computeCF` 0/0 guard | done, L5315 | done | test the desktop |
+| Correlation/variability text | v4.0 text, L3476 | follows v4.0 | none |
 | Greek letters in the report file | writes `rho`, `alpha` | writes ρ, α | cosmetic |
+| 2026 reference in About | done, L184–L262 | done | check the window |
 
 ---
 
@@ -47,13 +48,13 @@ The data sits like this:
 
 The code proves it:
 
-- L3322–L3329 fills `NUMOUT{1..10}` from the run without uncertainty, and
+- L3335–L3342 fills `NUMOUT{1..10}` from the run without uncertainty, and
   `NUMOUT{19,20,21}` from the last three values of that same run.
-- L3296–L3299 fills `NUMOUT{11,12}` and `NUMOUT{13..18}` from the run with
+- L3309–L3312 fills `NUMOUT{11,12}` and `NUMOUT{13..18}` from the run with
   uncertainty.
-- L985 puts Case and Option in front. So `NUMOUT{k}` becomes column `k+2`.
+- L998 puts Case and Option in front. So `NUMOUT{k}` becomes column `k+2`.
 
-The band row at L989 says something different:
+The band row at L1002 says something different:
 
 ```matlab
 UNCCONDLBL=cell(1,21); UNCCONDLBL(:)={''};
@@ -71,7 +72,7 @@ UNCCONDLBL=cell(1,23); UNCCONDLBL(:)={''};
 UNCCONDLBL(3:12)={'No Unc.'}; UNCCONDLBL(13:20)={'With Unc.'};
 ```
 
-The header row itself (L991–L1016) is correct. Only the band row is wrong.
+The header row itself (L1004–L1029) is correct. Only the band row is wrong.
 
 ---
 
@@ -80,7 +81,7 @@ The header row itself (L991–L1016) is correct. Only the band row is wrong.
 When the user selects KGE* or KGE, the port evaluates the uncertainty run as
 NSE, against NSE-scale class limits. The desktop does not do this.
 
-The desktop swaps columns instead, at L978–L983:
+The desktop swaps columns instead, at L991–L996:
 
 ```matlab
 if strcmp(indexlabel{1},'KGE*') || strcmp(indexlabel{1},'KGE')
@@ -97,7 +98,7 @@ run. The result:
   header calls them `idx1lbl`, which the swap has just set to NSE. The label
   does not match the number.
 
-To fix it, force the index around the uncertainty run. Replace L3294:
+To fix it, force the index around the uncertainty run. Replace L3307:
 
 ```matlab
    OUTP=fitevaluation(Yobs,Yprd,Yben,GoF_Index_Flag,repeated_cases,handles);
@@ -115,7 +116,7 @@ with:
    GoF_Index_Flag=fFlag; CLASSLIM=fCL;          % restore
 ```
 
-`CLASSLIM` is global (L516, and again inside `fitevaluation` at L3364).
+`CLASSLIM` is global (L529, and again inside `fitevaluation` at L3377).
 `GoF_Index_Flag` is global as well, but `fitevaluation` also takes it as an
 argument, so the call above passes the forced value.
 
@@ -129,7 +130,7 @@ reports NSE or E1 there.
 Both programs put the same ten values in the block without uncertainty, and
 the same eight in the block with it. They order the last three differently.
 
-| Position in block | Desktop v4.0 (L3754–L3766) | Python port |
+| Position in block | Desktop v4.0 (L3767–L3779) | Python port |
 |-------------------|----------------------------|-------------|
 | 8 | Indicator | p-value |
 | 9 | p-value | threshold |
@@ -148,28 +149,35 @@ entries are all `--`.
 
 ## Already in sync
 
-**E1 threshold conversion** (L300–L330). v4.0 converts the three class limits
+**E1 threshold conversion** (L313–L343). v4.0 converts the three class limits
 between all four scales, and pivots every conversion through NSE. It converts
 E1 to KGE in one step, so no rounding happens in between.
 
-**Two-section summary layout** (L978–L1016, L3296–L3329). v4.0 runs each case
+**Two-section summary layout** (L991–L1029, L3309–L3342). v4.0 runs each case
 twice, keeps both results, and writes the two blocks described above. Only the
 band row and the column order still need attention.
 
-**CF from an external error file** (L3028). An error file with two columns
+**CF from an external error file** (L3041). An error file with two columns
 gives a lower and an upper bound length that differ, so the uniform
 distribution around the observation is not symmetric and `CDF(O)` is not 0.5.
 Both programs used to divide by a constant 0.5 anyway, which pushed
 `CF/CFmax` outside the range 0 to 1. Both now take `CFmax` on the side where
 the prediction lies: `F(O)` below the observation and `1 - F(O)` above it.
 This is the rule `computeCF` already used for the triangular and uniform
-distributions (L5279). Only two-column error files change.
+distributions (L5292). Only two-column error files change.
 
-**`computeCF` 0/0 guard** (L5302). When the observation sits exactly on a
+**`computeCF` 0/0 guard** (L5315). When the observation sits exactly on a
 bound, `CFmax` is 0 and the division gives 0/0. A prediction outside the
 bounds now gets `CF/CFmax = 1`, which is the limit of the ratio.
 
-**Correlation/variability text** (L3463–L3499). v4.0 replaced the older
+**Second reference in the About box.** Both programs now list the 2013 and
+the 2026 papers, each with its own DOI link. In the desktop the About
+window grew by 60 px and the text block starts 60 px higher, so the older
+lines keep their place. The disabled 2015 slot was renamed `ref3` and
+`OpenURL3`, because `ref2` and `OpenURL2` now hold the 2026 link. Nobody
+has seen this window on screen yet, so open it once in MATLAB.
+
+**Correlation/variability text** (L3476–L3512). v4.0 replaced the older
 "Timing ... amplitude ..." wording with four classes, and dropped the
 `rho > 0.6` condition. The port follows the v4.0 text and classes. v4.0 also
 hides the text when measurement uncertainty is on, and the port does the same.
@@ -180,7 +188,7 @@ hides the text when measurement uncertainty is on, and the port does the same.
 
 The desktop writes the diagnostic twice. The figure gets TeX markup, which
 draws Greek letters. The report file gets the same string with the backslashes
-removed (L4004), so the file reads `rho` and `alpha`. The port writes the
+removed (L4017), so the file reads `rho` and `alpha`. The port writes the
 Greek letters in both places. The numbers are identical. Change the port only
 if you compare the two report files character by character.
 
