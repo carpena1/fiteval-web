@@ -1,6 +1,6 @@
 # FITEVAL web
 
-Python web port of FITEVAL v4.0, the MATLAB desktop program for model
+Python web port of FITEVAL v4.0.1, the MATLAB desktop program for model
 goodness-of-fit evaluation ((c) 2011 Axel Ritter & Rafael Muñoz-Carpena;
 Ritter and Muñoz-Carpena, 2013, J. Hydrol. 480,
 doi:10.1016/j.jhydrol.2012.12.004).

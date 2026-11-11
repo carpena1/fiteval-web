@@ -161,7 +161,7 @@ def dixon_outliers(yobs, yprd) -> OutlierResult:
 
 
 def kge_nse_imbalance(yobs, yprd, nse: float, kge_star: float) -> str:
-    """Correlation/variability imbalance diagnostic (L3453-3489).
+    """Correlation/variability imbalance diagnostic (L3476-3512).
 
     Returns '' when the fit sits inside the KGE* envelope, else one of the
     four v4.0 classes:
@@ -183,7 +183,7 @@ def kge_nse_imbalance(yobs, yprd, nse: float, kge_star: float) -> str:
 
     yobs = np.asarray(yobs, dtype=float)
     yprd = np.asarray(yprd, dtype=float)
-    # MATLAB gate NSE>0 (L3455); a NaN index fails it there and here
+    # MATLAB gate NSE>0 (L3478); a NaN index fails it there and here
     if not np.isfinite(nse) or not np.isfinite(kge_star) or nse <= 0:
         return ""
     sq_nse = cmath.sqrt(nse)

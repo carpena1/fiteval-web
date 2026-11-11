@@ -130,8 +130,8 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
     else:
         rmse_fmt = "%1.3e"
 
-    # ---- imbalance diagnostic (L3453-3489; see indices.py note).  v4.0 also
-    # skips it under measurement uncertainty (MeasUncertValue==0, L3455),
+    # ---- imbalance diagnostic (L3476-3512; see indices.py note).  v4.0 also
+    # skips it under measurement uncertainty (MeasUncertValue==0, L3478),
     # where Yprd/Yobs no longer carry the plain spread the envelope assumes.
     imbalance = ""
     if jexp == 2 and case.meas_unc == 0:

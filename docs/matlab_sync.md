@@ -1,4 +1,4 @@
-# MATLAB sync — `FITEVAL_GUI.m` v4.0 and the Python port
+# MATLAB sync — `FITEVAL_GUI.m` v4.0.1 and the Python port
 
 This file shows where the desktop program and the Python port still differ.
 It also gives the changes to make in the desktop source.
@@ -16,7 +16,7 @@ closed gap A and most of gap B. That older text is gone. Use the table below.
 
 ## Status
 
-| Item | Desktop v4.0 | Python port | Action |
+| Item | Desktop v4.0.1 | Python port | Action |
 |------|--------------|-------------|--------|
 | E1 threshold conversion | done, L313 | done | none |
 | Two-section summary layout | done, L991–L1029 | done | none |
@@ -130,7 +130,7 @@ reports NSE or E1 there.
 Both programs put the same ten values in the block without uncertainty, and
 the same eight in the block with it. They order the last three differently.
 
-| Position in block | Desktop v4.0 (L3767–L3779) | Python port |
+| Position in block | Desktop v4.0.1 (L3767–L3779) | Python port |
 |-------------------|----------------------------|-------------|
 | 8 | Indicator | p-value |
 | 9 | p-value | threshold |
