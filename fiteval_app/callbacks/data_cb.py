@@ -49,7 +49,7 @@ def register(app) -> None:
                 # files on disk are observed-first; table shows Yprd first
                 disk = parse_numeric_text(decode_upload(_contents))
                 if disk.shape[1] > 3:
-                    disk = disk[:, :3]  # load_file truncates to 3 cols (L1651)
+                    disk = disk[:, :3]  # load_file truncates to 3 cols (L1712)
                 table = swap_first_two(disk)
                 name = up_name or "data.in"
                 msg, cls = message(f"Loaded {name} ({table.shape[0]} rows)")

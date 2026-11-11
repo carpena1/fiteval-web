@@ -1,8 +1,8 @@
 """Goodness-of-fit indices and diagnostics.
 
-Direct port of fun_GoF_Indexes (FITEVAL_GUI.m L4043-4068), the bias block
-(L3553-3584), Dixon's Q-test (L3596-3624) and the KGE/NSE imbalance
-diagnostic (L3438-3456).
+Direct port of fun_GoF_Indexes (FITEVAL_GUI.m L4072-4097), the bias block
+(L3609-3638), Dixon's Q-test (L3650-3678) and the KGE/NSE imbalance
+diagnostic (L3476-3512).
 """
 
 from __future__ import annotations
@@ -64,12 +64,12 @@ def gof_indexes(yobs, yprd, yben, yerr, j) -> np.ndarray:
 
 
 def nse_to_kge_threshold(nse_thr: float) -> float:
-    """KGEthr = 1 - sqrt(2)*(1 - sqrt(NSEthr))  (GoFIndexSelection L304)."""
+    """KGEthr = 1 - sqrt(2)*(1 - sqrt(NSEthr))  (GoFIndexSelection L326)."""
     return 1.0 - math.sqrt(2.0) * (1.0 - math.sqrt(nse_thr))
 
 
 def kge_to_nse_threshold(kge_thr: float) -> float:
-    """NSEthr = 0.5*(sqrt(2) - (1 - KGEthr))^2  (GoFIndexSelection L308)."""
+    """NSEthr = 0.5*(sqrt(2) - (1 - KGEthr))^2  (GoFIndexSelection L328)."""
     return 0.5 * (math.sqrt(2.0) - (1.0 - kge_thr)) ** 2
 
 
@@ -91,7 +91,7 @@ def e1_to_nse_threshold(e1_thr: float) -> float:
 
 def relative_bias(yobs, yprd, bias_value: float, index_label: str
                   ) -> tuple[float, str, str]:
-    """Model bias evaluation (L3553-3584).
+    """Model bias evaluation (L3609-3638).
 
     Returns (rel_bias %, bias_txt1, bias_txt2); bias_txt2 uses the plain-text
     form of the MATLAB TeX annotation.
@@ -135,7 +135,7 @@ class OutlierResult:
 
 
 def dixon_outliers(yobs, yprd) -> OutlierResult:
-    """Dixon's Q-test on residuals at alpha=0.05 (L3596-3624)."""
+    """Dixon's Q-test on residuals at alpha=0.05 (L3650-3678)."""
     yobs = np.asarray(yobs, dtype=float)
     yprd = np.asarray(yprd, dtype=float)
     err_ns = yobs - yprd

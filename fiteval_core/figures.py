@@ -1,4 +1,4 @@
-"""Matplotlib reproduction of the FITEVAL figures (FITEVAL_GUI.m L3647-3925).
+"""Matplotlib reproduction of the FITEVAL figures (FITEVAL_GUI.m L3687-3954).
 
 Pure Figure objects on the Agg backend - no pyplot, no global state, safe
 for multi-threaded serving.  Sizes replicate the desktop pixel dimensions
@@ -19,7 +19,7 @@ from .config import FitevalConfig
 from .report import summary_segments
 from .results import EvalResult
 
-# font-size scaling: desktop uses +2 on Windows, +3 on macOS (L3650-3654);
+# font-size scaling: desktop uses +2 on Windows, +3 on macOS (L3689-3693);
 # the web app renders identically everywhere, macOS flavor chosen
 SCLFTSZ = 3
 FONTS = ["Arial", "Helvetica", "DejaVu Sans"]
@@ -69,7 +69,7 @@ def _sci_axis(ax, which: str, offset_size: float) -> None:
 
 def draw_scatter(ax, res: EvalResult, cfg: FitevalConfig,
                  fig_text: str = "") -> None:
-    """Observed vs computed panel (fig01, L3665-3722)."""
+    """Observed vs computed panel (fig01, L3704-3761)."""
     s = _sizes(cfg)
     yobs, yprd = res.yobs, res.yprd
     minv = min(yobs.min(), yprd.min())
@@ -128,7 +128,7 @@ def draw_scatter(ax, res: EvalResult, cfg: FitevalConfig,
 
 
 def draw_cdf(ax, res: EvalResult, cfg: FitevalConfig) -> None:
-    """Cumulative-probability panel (fig02, L3746-3812)."""
+    """Cumulative-probability panel (fig02, L3784-3850)."""
     s = _sizes(cfg)
     l1, l2, l3 = res.class_lim
     if res.main_ci[0] > 0.5:
@@ -167,13 +167,13 @@ def draw_cdf(ax, res: EvalResult, cfg: FitevalConfig) -> None:
     ax.set_ylabel("Cumulative Probability", fontsize=s["inc2"], family=FONTS)
     ax.tick_params(labelsize=s["inc1"], direction="out")
     ax.minorticks_on()
-    ax.set_facecolor("none")  # MATLAB axes 'color','none' (L3748)
+    ax.set_facecolor("none")  # MATLAB axes 'color','none' (L3786)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
 
 
 def draw_series(ax, res: EvalResult, cfg: FitevalConfig) -> None:
-    """Observed & computed series panel (fig03, L3815-3851)."""
+    """Observed & computed series panel (fig03, L3853-3889)."""
     s = _sizes(cfg)
     yobs, yprd = res.yobs, res.yprd
     xs = np.arange(1, yobs.size + 1)
@@ -206,13 +206,13 @@ def draw_series(ax, res: EvalResult, cfg: FitevalConfig) -> None:
                   family=FONTS)
     ax.tick_params(labelsize=s["inc1"], direction="out")
     ax.minorticks_on()
-    ax.set_facecolor("none")  # MATLAB axes 'color','none' (L3817)
+    ax.set_facecolor("none")  # MATLAB axes 'color','none' (L3855)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
 
 
 def draw_text_panel(ax, res: EvalResult, cfg: FitevalConfig) -> None:
-    """GOODNESS-OF-FIT EVALUATION text block (txstr, L3853-3896).
+    """GOODNESS-OF-FIT EVALUATION text block (txstr, L3891-3934).
 
     Rendered as stacked segments so the three MATLAB \\bf emphases (rating,
     p-value, secondary index+CI) come out bold inline.
@@ -261,7 +261,7 @@ def fig_series(res, cfg) -> Figure:
 
 
 def fig_combined(res, cfg, fig_text="") -> Figure:
-    """2x2 combined layout (fig00, L3879-3897): 800x440 px landscape."""
+    """2x2 combined layout (fig00, L3917-3935): 800x440 px landscape."""
     fig = Figure(figsize=(8.0, 4.4), dpi=100, facecolor="white")
     lg_x = 0.43
     ax1 = fig.add_axes([0.08, 0.53, lg_x / 1.1, lg_x])
@@ -272,7 +272,7 @@ def fig_combined(res, cfg, fig_text="") -> Figure:
     draw_cdf(ax2, res, cfg)
     draw_series(ax3, res, cfg)
     draw_text_panel(ax4, res, cfg)
-    # combined panels use the reduced font (ftszred1, L3889); axis labels
+    # combined panels use the reduced font (ftszred1, L3927); axis labels
     # are shrunk with the axes so the tight 2x2 layout doesn't collide
     s = _sizes(cfg)
     for ax in (ax1, ax2, ax3):

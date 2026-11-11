@@ -18,7 +18,7 @@ def spec_from_state(method, per, err_records, err_type,
                     obs_on, obs_dist, cvo, plubo, puubo,
                     prd_on, prd_dist, cvp, plubp, puubp) -> UncSpec:
     """Build an UncSpec from panel state; raises UncError on bad input
-    (mirrors ChkUncParam, L1898-1926)."""
+    (mirrors ChkUncParam, L1967-1995)."""
     if method == "per":
         if per is None or not (0 < float(per) < 1):
             raise UncError("PER must >0 and <1")

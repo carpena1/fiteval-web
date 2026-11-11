@@ -14,7 +14,7 @@ class EvalCase:
     """One evaluation input set, observed-first, after column interpretation.
 
     Phase 1 uses only yobs/yprd/yben; the uncertainty arrays are filled by
-    Phase 2 (fiteval_2 L3145-3253 column layouts).
+    Phase 2 (fiteval_2 L3187-3294 column layouts).
     """
     yobs: np.ndarray
     yprd: np.ndarray

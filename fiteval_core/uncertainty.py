@@ -1,11 +1,11 @@
 """Measurement-uncertainty methods (Phase 2).
 
 Ports of:
-- readsUncertParam / InterpretDistInput (FITEVAL_GUI.m L5139-5208) - the
+- readsUncertParam / InterpretDistInput (FITEVAL_GUI.m L5168-5237) - the
   encoded option string '<opt> <case> [oX v1 v2] [pX v1 v2]'
-- UncString / ReadUncOptions (L2402-2506) - building that string
-- computeCF (L5211-5427) + tricdf (L5430-5490) - correction factors
-- the fiteval_2 uncertainty pipeline (L2969-3253): PER/error-file bounds,
+- UncString / ReadUncOptions (L2471-2575) - building that string
+- computeCF (L5240-5462) + tricdf (L5465-5525) - correction factors
+- the fiteval_2 uncertainty pipeline (L3015-3294): PER/error-file bounds,
   the option-2 uniform-CDF conversion, column interpretation and the
   uncertainty-corrected residual Yerror.
 
@@ -28,7 +28,7 @@ DIST_LETTERS = {1: "N", 2: "L", 3: "T", 4: "U"}
 DIST_NUMBERS = {v: k for k, v in DIST_LETTERS.items()}
 DIST_NAMES = {1: "Normal", 2: "Lognormal", 3: "Triangular", 4: "Uniform"}
 
-# OU_TypeTxt texts (fiteval_2 L3123-3139), padded exactly as the source
+# OU_TypeTxt texts (fiteval_2 L3165-3181), padded exactly as the source
 HARMEL_2010_BOTH = "Observations and model uncertainty included (Harmel et al. 2010):"
 HARMEL_2010_OBS = "Uncertainty in observations included (Harmel et al. 2010):       "
 HARMEL_2010_PRD = "Model uncertainty included (Harmel et al. 2010):                 "
@@ -74,7 +74,7 @@ def _dist_part(prefix: str, dist: int, v1: float, v2: float | None) -> str:
 
 
 def build_unc_string(spec: UncSpec, data_ncols: int) -> str:
-    """UncString port (L2490-2506); data_ncols is 2 or 3 (benchmark)."""
+    """UncString port (L2559-2575); data_ncols is 2 or 3 (benchmark)."""
     if spec.method == "per":
         if spec.per is None or not (0 < spec.per < 1):
             raise UncError("PER must >0 and <1")
@@ -105,7 +105,7 @@ def build_unc_string(spec: UncSpec, data_ncols: int) -> str:
 
 
 def parse_unc_string(s: str):
-    """readsUncertParam port (L5139-5208).
+    """readsUncertParam port (L5168-5237).
 
     Returns (option, case, obs_dist, prd_dist, cvo, cvp,
              plubo, puubo, plubp, puubp); distributions 0 when absent.
@@ -162,7 +162,7 @@ def unifcdf(x, a, b):
 
 
 def tricdf(x, lb, ub, mode):
-    """Triangular CDF, mode-parameterized (tricdf_scalar, L5437-5490)."""
+    """Triangular CDF, mode-parameterized (tricdf_scalar, L5472-5525)."""
     t = np.asarray(x, dtype=float)
     a = np.asarray(lb, dtype=float) + np.zeros_like(t)
     b = np.asarray(ub, dtype=float) + np.zeros_like(t)
@@ -183,7 +183,7 @@ def _logn_check(x, label="data"):
 
 
 # ---------------------------------------------------------------------------
-# computeCF (L5211-5427)
+# computeCF (L5240-5462)
 # ---------------------------------------------------------------------------
 
 def compute_cf(case: int, obs_dist: int, prd_dist: int,
@@ -193,7 +193,7 @@ def compute_cf(case: int, obs_dist: int, prd_dist: int,
                perprob: float = 95.0) -> np.ndarray:
     """Returns WRITEDATA = [OBS PRD (BCH) CF(/CFmax) bounds...] obs-first.
 
-    cvo/cvp are FRACTIONS here (already divided by 100, as at L3024).
+    cvo/cvp are FRACTIONS here (already divided by 100, as at L3075).
     """
     obs = np.asarray(obs, dtype=float).ravel()
     prd = np.asarray(prd, dtype=float).ravel()
@@ -218,7 +218,7 @@ def compute_cf(case: int, obs_dist: int, prd_dist: int,
                 z = np.abs((y - x) / sigma)
             cf = norm.cdf(z) - 0.5
             cfmax = np.full(x.size, 0.5)
-            # NOTE - for lognormal these bounds live in ln-space (L5255-5256)
+            # NOTE - for lognormal these bounds live in ln-space (L5284-5285)
             lub = x - sigma
             uub = x + sigma
         elif dist == 3:
@@ -277,7 +277,7 @@ def compute_cf(case: int, obs_dist: int, prd_dist: int,
                 uubp = np.exp(sigma_p * norm.ppf(prob_sup) + mu_p)
 
         # P[O < bound]; NOTE - N/LN use the RAW series as the location
-        # parameter here (L5355-5356), replicated deliberately
+        # parameter here (L5390-5391), replicated deliberately
         if obs_dist == 1:
             p_o_upp = norm.cdf(uubp, loc=obs, scale=sigma_o)
             p_o_low = norm.cdf(lubp, loc=obs, scale=sigma_o)
@@ -312,7 +312,7 @@ def compute_cf(case: int, obs_dist: int, prd_dist: int,
 
         cf = 1.0 - (p_o_upp - p_o_low) * (p_p_upp - p_p_low)  # CFmax = 1
 
-        # error bars for N/LN revert to mean +- sigma (L5395-5406);
+        # error bars for N/LN revert to mean +- sigma (L5430-5441);
         # for LN sigma is the ln-space value applied to the raw series
         if obs_dist in (1, 2):
             lubo, uubo = obs - sigma_o, obs + sigma_o
@@ -327,12 +327,12 @@ def compute_cf(case: int, obs_dist: int, prd_dist: int,
 
 
 # ---------------------------------------------------------------------------
-# fiteval_2 uncertainty pipeline (L2969-3253)
+# fiteval_2 uncertainty pipeline (L3015-3294)
 # ---------------------------------------------------------------------------
 
 def _per_to_cf(data: np.ndarray, len1: np.ndarray, len2: np.ndarray
                ) -> np.ndarray:
-    """Uniform-PDF CF conversion (L2977-3002); data obs-first 2-3 cols."""
+    """Uniform-PDF CF conversion (L3023-3058); data obs-first 2-3 cols."""
     yobs = data[:, 0]
     yprd = data[:, 1]
     lb = yobs - len1
@@ -357,7 +357,7 @@ def _per_to_cf(data: np.ndarray, len1: np.ndarray, len2: np.ndarray
 
 
 def _ou_lines(meas: float, nrcol: int) -> tuple[str, str]:
-    """OU_TypeTxt selection (L3123-3225)."""
+    """OU_TypeTxt selection (L3165-3266)."""
     if meas == 3:
         head = HARMEL_2010_BOTH if nrcol in (7, 8) else HARMEL_2010_OBS
         return head, OU_OPTION_LINES[4]
@@ -379,7 +379,7 @@ def prepare_unc_cases(data: np.ndarray, spec: UncSpec,
     """Build the (with-uncertainty, without-uncertainty) case pair.
 
     `data` is obs-first [Yobs Yprd (Yben)], 2 or 3 columns.  Returns the two
-    EvalCases evaluated as fiteval_2 runs fitevaluation twice (L3266, L3300).
+    EvalCases evaluated as fiteval_2 runs fitevaluation twice (L3307, L3335).
     """
     data = np.atleast_2d(np.asarray(data, dtype=float))
     ncol = data.shape[1]
@@ -393,7 +393,7 @@ def prepare_unc_cases(data: np.ndarray, spec: UncSpec,
         aux = data.copy()
         meas = spec.per
     elif spec.method == "per_mixed":
-        # multi-run common PER (MR_MixedMethod=2, L2975-3002): converted to
+        # multi-run common PER (MR_MixedMethod=2, L3021-3058): converted to
         # correction factors through the uniform CDF, unlike the single-run
         # PER bounds method
         if spec.per is None or not (0 < spec.per < 1):
@@ -411,7 +411,7 @@ def prepare_unc_cases(data: np.ndarray, spec: UncSpec,
             raise UncError("Error data must have 1 (PER) or 2 (bounds) columns")
         # bounds (PER) method unless the CF conversion is forced: option '2'
         # (MR_MixedMethod=1) always, or a benchmark column present
-        # (MeasUncertValue==2 enters the mixed block, fiteval_2 L2970-3004).
+        # (MeasUncertValue==2 enters the mixed block, fiteval_2 L3016-3060).
         if not spec.err_as_cf and ncol == 2:
             aux = np.column_stack([data, err])
             meas = 1.0
@@ -456,12 +456,12 @@ def prepare_unc_cases(data: np.ndarray, spec: UncSpec,
     else:
         raise UncError("Unknown uncertainty method")
 
-    # ---- repeated-case removal on the augmented array (L3103-3117) -----
+    # ---- repeated-case removal on the augmented array (L3145-3159) -----
     repeated = 0
     if no_repeated:
         aux, repeated = drop_repeated_rows(aux)
 
-    # ---- column interpretation (L3145-3225) -----------------------------
+    # ---- column interpretation (L3187-3266) -----------------------------
     nrcol = aux.shape[1]
     yobs = aux[:, 0]
     yprd = aux[:, 1]
@@ -519,7 +519,7 @@ def prepare_unc_cases(data: np.ndarray, spec: UncSpec,
     else:
         raise UncError("Wrong option value provided!")
 
-    # ---- uncertainty-corrected residual Yerror (L3229-3253) -------------
+    # ---- uncertainty-corrected residual Yerror (L3270-3294) -------------
     if meas < 3:
         yerr = np.zeros(yobs.size)
         below = yprd < ub_omin

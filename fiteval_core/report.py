@@ -1,9 +1,9 @@
 """Text outputs: the numerical report file and the figure summary panel.
 
 numerical_report() is a verbatim port of numerical_output
-(FITEVAL_GUI.m L3939-4006); summary_lines() reproduces the txstr text panel
-(L3853-3873) without TeX markup.  build_numout_row() ports the NUMOUT record
-(L3726-3743) used by the multi-run summary CSV.
+(FITEVAL_GUI.m L3968-4035); summary_lines() reproduces the txstr text panel
+(L3891-3911) without TeX markup.  build_numout_row() ports the NUMOUT record
+(L3766-3782) used by the multi-run summary CSV.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ def _num2str(v: float) -> str:
 
 
 def nrmse_sd_text(res: EvalResult, for_file: bool) -> str:
-    """The 'NRMSE= 100*RMSE/SD= ..%; <sec>= .. [..]; N= ..' line (L3385+3458).
+    """The 'NRMSE= 100*RMSE/SD= ..%; <sec>= .. [..]; N= ..' line (L3423+3458).
 
     for_file=True applies the char(183)->'*' and char(8211)->' - '
     substitutions done when writing numerical_output.txt.
@@ -41,10 +41,10 @@ def nrmse_sd_text(res: EvalResult, for_file: bool) -> str:
             + " [" + _fmt("%1.3f", res.sec_ci[0]) + " - "
             + _fmt("%1.3f", res.sec_ci[1]) + "]")
     txt += f"; N= {res.n}"
-    # negative-CI dash treatment: ' - -' -> ' <endash> -' (L3461), which the
-    # file writer later expands back to '  -  -' (L3981-3982)
+    # negative-CI dash treatment: ' - -' -> ' <endash> -' (L3517), which the
+    # file writer later expands back to '  -  -' (L4009-4010)
     txt = txt.replace(" - -", "  -  -" if for_file else " \N{EN DASH} -")
-    # compression when the TeX-markup version exceeds 90 chars (L3464);
+    # compression when the TeX-markup version exceeds 90 chars (L3520);
     # the MATLAB string carries 39 chars of \it/\bf/\rm markup
     if len(txt) + 39 > 90:
         txt = txt.replace("= ", "=")
@@ -128,7 +128,7 @@ def nrmse_sd_segments(res: EvalResult) -> list[tuple[str, bool]]:
     """The NRMSE/SD figure line split into (text, bold) segments.
 
     The secondary indicator with its 95% CI (between 'NRMSE..%' and '; N=')
-    is bold, matching the \\bf markup at L3458.
+    is bold, matching the \\bf markup at L3514.
     """
     dot = "\N{MIDDLE DOT}"
     p1 = f"NRMSE= 100{dot}RMSE/SD= " + _fmt("%1.0f", res.nrmse_pct) + "%; "
@@ -144,7 +144,7 @@ def nrmse_sd_segments(res: EvalResult) -> list[tuple[str, bool]]:
 
 def summary_segments(res: EvalResult) -> list[list[tuple[str, bool]]]:
     """Figure text panel as styled lines: each line is a list of
-    (text, bold) segments (txstr, L3853-3873).  Three lines carry the
+    (text, bold) segments (txstr, L3891-3911).  Three lines carry the
     MATLAB \\bf emphasis: the rating on the 'Evaluation of' line, the
     '(p-value: ..)' on the Unsatisfactory line, and the secondary index
     with its CI on the NRMSE line.
@@ -181,12 +181,12 @@ def summary_segments(res: EvalResult) -> list[list[tuple[str, bool]]]:
 
 
 def summary_lines(res: EvalResult) -> list[str]:
-    """Figure text panel lines (txstr, L3853-3873), plain text."""
+    """Figure text panel lines (txstr, L3891-3911), plain text."""
     return ["".join(t for t, _ in segs) for segs in summary_segments(res)]
 
 
 def build_numout_row(res: EvalResult) -> list[str]:
-    """NUMOUT record for the multi-run summary CSV (L3726-3743)."""
+    """NUMOUT record for the multi-run summary CSV (L3766-3782)."""
     if rounddec(res.rmse, 2) == 0:
         rf = "%1.3e"
     else:

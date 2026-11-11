@@ -137,7 +137,7 @@ def _imbalance(yprd):
 
 
 def test_imbalance_class_2a_rho_higher_than_alpha():
-    """Damped amplitude: alpha = 0.3, rho = 1, so rho/alpha > 1.05 (L3463)."""
+    """Damped amplitude: alpha = 0.3, rho = 1, so rho/alpha > 1.05 (L3486)."""
     txt = _imbalance(0.3 * _OBS)
     assert txt == ("Variability (\N{GREEK SMALL LETTER ALPHA}) - correlation "
                    "(\N{GREEK SMALL LETTER RHO}) mismatch: "
@@ -146,7 +146,7 @@ def test_imbalance_class_2a_rho_higher_than_alpha():
 
 
 def test_imbalance_class_2b_underestimated():
-    """alpha < 1 and rho/alpha < 0.95 -> 'and underestimated' (L3470-3474)."""
+    """alpha < 1 and rho/alpha < 0.95 -> 'and underestimated' (L3493-3497)."""
     yprd = 0.80 * _OBS + np.random.default_rng(0).normal(0, 0.40, _OBS.size)
     txt = _imbalance(yprd)
     assert "higher than \N{GREEK SMALL LETTER RHO}" in txt
@@ -154,14 +154,14 @@ def test_imbalance_class_2b_underestimated():
 
 
 def test_imbalance_class_2c_overestimated():
-    """alpha >= 1 and rho/alpha < 0.95 -> 'and overestimated' (L3476-3480)."""
+    """alpha >= 1 and rho/alpha < 0.95 -> 'and overestimated' (L3499-3503)."""
     yprd = 1.20 * _OBS + np.random.default_rng(0).normal(0, 0.30, _OBS.size)
     txt = _imbalance(yprd)
     assert txt.endswith("(1.21 > 0.94) and overestimated")
 
 
 def test_imbalance_class_1_bias_driven():
-    """rho == alpha == 1 with a pure offset: the gap is bias (L3485-3486)."""
+    """rho == alpha == 1 with a pure offset: the gap is bias (L3508-3509)."""
     txt = _imbalance(_OBS + 0.5)
     assert txt == ("Correlation (\N{GREEK SMALL LETTER RHO}) "
                    "\N{ALMOST EQUAL TO} variability "
@@ -169,7 +169,7 @@ def test_imbalance_class_1_bias_driven():
 
 
 def test_imbalance_silent_when_nse_not_positive():
-    """MATLAB gate NSE>0 (L3455): 3x amplitude gives NSE=-3, so no text."""
+    """MATLAB gate NSE>0 (L3478): 3x amplitude gives NSE=-3, so no text."""
     assert _idx(_OBS, 3.0 * _OBS)[1] < 0
     assert _imbalance(3.0 * _OBS) == ""
 

@@ -1,7 +1,7 @@
 """Configuration parameters and fitevalconfig.txt IO.
 
 File format is byte-compatible with the desktop app (WriteConfigFile,
-FITEVAL_GUI.m L1680-1702; ReadConfigFile L1745-1800): 12 lines, value(s)
+FITEVAL_GUI.m L1741-1763; ReadConfigFile L1806-1868): 12 lines, value(s)
 first, then a %-comment.
 """
 
@@ -63,7 +63,7 @@ class FitevalConfig:
 
 
 def check_class_limits(class_lim) -> str | None:
-    """Return an error message (or None) per CheckClassLimits (L472-483)."""
+    """Return an error message (or None) per CheckClassLimits (L511-522)."""
     l1, l2, l3 = class_lim
     if l1 > 1 or l2 > 1 or l3 > 1 or l1 >= l2 or l2 >= l3:
         return "Incorrect values for class limits in Configuration!"

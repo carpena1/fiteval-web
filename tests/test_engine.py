@@ -90,7 +90,7 @@ def test_report_structure():
     assert "- Acceptable (NSE = 0.650 - 0.799):" in rpt
     assert "- Unsatisfactory (NSE < 0.650):" in rpt
     assert "p-value:" in rpt
-    # the TeX-length>90 rule (L3464) compresses '= ' to '=' in practice
+    # the TeX-length>90 rule (L3520) compresses '= ' to '=' in practice
     assert "NRMSE=100*RMSE/SD=" in rpt
     assert "Presence of outliers (Q-test):" in rpt
     assert "Model bias:" in rpt

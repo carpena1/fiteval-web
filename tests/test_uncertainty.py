@@ -230,7 +230,7 @@ def test_cf_uniform_obs_on_bound_outside_is_one():
 
 def test_imbalance_diagnostic_skipped_under_uncertainty():
     """v4.0 gates the correlation/variability diagnostic on
-    MeasUncertValue==0 (L3455): the same data reports it without
+    MeasUncertValue==0 (L3478): the same data reports it without
     uncertainty and stays silent with it."""
     from fiteval_core.engine import evaluate_case
 
@@ -335,5 +335,5 @@ def test_unc_forces_nse_for_kge_flags(tmp_path):
     art_u, art_p = run_evaluation_unc(
         _data(40), UncSpec(method="per", per=0.1), "proj.in", tmp_path, cfg,
         rng=np.random.default_rng(4))
-    assert art_u.result.index_label == "NSE"   # forced (L3373-3377)
+    assert art_u.result.index_label == "NSE"   # forced (L3411-3416)
     assert art_p.result.index_label == "KGE"   # plain run keeps the flag

@@ -1,6 +1,6 @@
 """Bounded-support kernel CDF replicating MATLAB ksdensity.
 
-fitevaluation (L3486) calls
+fitevaluation (L3542) calls
     ksdensity(dist, xi, 'function','cdf', 'support',[lowerb 1.001])
 MATLAB maps the data to an unbounded scale with the logit-type transform
 z = log((x-L)/(U-x)), selects the normal-optimal bandwidth from a robust

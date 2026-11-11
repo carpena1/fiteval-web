@@ -1,6 +1,6 @@
 """Run one evaluation and write the desktop-compatible output files.
 
-File naming mirrors fiteval_2 (L3270-3313): for project name <nproy>
+File naming mirrors fiteval_2 (L3316-3355): for project name <nproy>
 (input filename without extension), suffix 'U' for the with-uncertainty run:
   <nproy>[U]_out.png   combined 4-panel figure (always)
   <nproy>[U].pdf       combined figure as PDF (always)
@@ -86,7 +86,7 @@ def run_evaluation_unc(data: np.ndarray, spec, name: str, outdir: str | Path,
                        fig_ext: str = "", fig_text: str = "",
                        rng: np.random.Generator | None = None
                        ) -> tuple[RunArtifacts, RunArtifacts]:
-    """Uncertainty evaluation: runs twice like fiteval_2 (L3266 + L3300).
+    """Uncertainty evaluation: runs twice like fiteval_2 (L3307 + L3335).
 
     Returns (with-uncertainty artifacts '<name>U_*',
              without-uncertainty artifacts '<name>_*').
@@ -102,7 +102,7 @@ def run_evaluation_unc(data: np.ndarray, spec, name: str, outdir: str | Path,
 
 
 def delete_output_files(outdir: str | Path, name: str) -> int:
-    """DeleteOutputFiles (L1362): remove <nproy>* except the .in and .err."""
+    """DeleteOutputFiles (L1428): remove <nproy>* except the .in and .err."""
     outdir = Path(outdir)
     nproy = name.rsplit(".", 1)[0]
     n = 0

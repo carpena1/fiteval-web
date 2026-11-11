@@ -88,7 +88,7 @@ def swap_first_two(data: np.ndarray) -> np.ndarray:
 
 
 def drop_nan_rows(*cols: np.ndarray) -> tuple[list[np.ndarray], int]:
-    """Drop rows where the sum across columns is NaN (fitevaluation L3347)."""
+    """Drop rows where the sum across columns is NaN (fitevaluation L3385)."""
     stacked = np.column_stack([c for c in cols if c is not None and c.size])
     keep = ~np.isnan(stacked.sum(axis=1))
     out = [c[keep] if (c is not None and c.size) else c for c in cols]
@@ -96,7 +96,7 @@ def drop_nan_rows(*cols: np.ndarray) -> tuple[list[np.ndarray], int]:
 
 
 def drop_repeated_rows(data: np.ndarray) -> tuple[np.ndarray, int]:
-    """Remove repeated cases, keeping first occurrences (fiteval_2 L3103-3117).
+    """Remove repeated cases, keeping first occurrences (fiteval_2 L3145-3159).
 
     Rows are considered identical when the hash key
     2*|c1| + 3*|c2| + c2/pi matches (c1, c2 = first two columns, obs-first).

@@ -1,4 +1,4 @@
-"""Configuration dialog (Configuration_Callback, FITEVAL_GUI.m L257-485)."""
+"""Configuration dialog (Configuration_Callback, FITEVAL_GUI.m L271-524)."""
 
 from __future__ import annotations
 

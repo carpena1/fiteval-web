@@ -1,4 +1,4 @@
-"""Multi-run batch mode (MR_RunButtonPushed, FITEVAL_GUI.m L846-1027).
+"""Multi-run batch mode (MR_RunButtonPushed, FITEVAL_GUI.m L885-1093).
 
 Each row holds a file field ('name.in [norep] [figure text]') and an option
 string ('0', a PER value, '1 <errfile>', '2 <errfile>', '3 <case> o... p...'
@@ -34,7 +34,7 @@ class MultiRunOutcome:
 def parse_list_file(text: str) -> list[tuple[str, str]]:
     """Parse a multi-run list file into (file_field, option) rows.
 
-    Mirrors MR_LoadFileName (L1106-1133): each line is split at the first
+    Mirrors MR_LoadFileName (L1172-1199): each line is split at the first
     ';' or ',' -- everything before is the file field
     ('name.in [norep] [label]'), everything after is the option string.
     Lines without a separator are taken as a file field with option '0'.
@@ -66,7 +66,7 @@ def parse_file_field(field_str: str) -> tuple[str, bool, str]:
 
 def option_to_spec(option: str, workspace: Path
                    ) -> tuple[UncSpec | None, int | None]:
-    """Interpret one option string (ValidOptionVal + Run_Callback L580-593).
+    """Interpret one option string (ValidOptionVal + Run_Callback L619-632).
 
     Returns (spec, parsed_case); spec None means no uncertainty.
     parsed_case is the CF case number from the string (None otherwise).
@@ -205,7 +205,7 @@ def run_multi(rows: list[tuple[str, str]], workspace: str | Path,
 
             if spec is not None and spec.method == "cf" and case is not None:
                 # the case number in the string decides benchmark use
-                # (computeCF L3029-3043)
+                # (computeCF L3079-3089)
                 if case % 2 == 0 and data.shape[1] < 3:
                     raise DataError(f"Benchmark series required in {fname}")
                 if case % 2 == 1 and data.shape[1] == 3:

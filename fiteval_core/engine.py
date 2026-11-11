@@ -1,4 +1,4 @@
-"""Evaluation pipeline - port of fitevaluation (FITEVAL_GUI.m L3334-3927).
+"""Evaluation pipeline - port of fitevaluation (FITEVAL_GUI.m L3376-3956).
 
 evaluate_case() performs one evaluation (one output set); evaluate() is the
 fiteval_2-level driver that handles repeated-row removal and, in Phase 2,
@@ -35,7 +35,7 @@ class EngineError(RuntimeError):
 
 
 def _index_selection(flag: int, meas_unc: float) -> tuple[str, str, int, int, int]:
-    """Port of L3366-3377: (label, sec_label, jexp, pri_pos, sec_pos).
+    """Port of L3403-3416: (label, sec_label, jexp, pri_pos, sec_pos).
 
     pri/sec_pos are 0-based positions in [rmse, ceff, kge_star, kge].
     """
@@ -58,7 +58,7 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
     yobs = np.asarray(case.yobs, dtype=float).ravel()
     yprd = np.asarray(case.yprd, dtype=float).ravel()
 
-    # ---- NaN removal over [yobs yprd yben] (L3347-3361)
+    # ---- NaN removal over [yobs yprd yben] (L3385-3399)
     cols = [yobs, yprd]
     if case.yben is not None:
         cols.append(np.asarray(case.yben, dtype=float).ravel())
@@ -89,14 +89,14 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
     label, sec_label, jexp, pri, sec_pos = _index_selection(flag, case.meas_unc)
     forced_to_nse = flag in (2, 3) and label == "NSE"
 
-    # ---- indices on the full data (L3381-3385)
+    # ---- indices on the full data (L3419-3423)
     gof = gof_indexes(yobs, yprd, yben, yerr, jexp)
     main_idx = float(gof[pri])
     sec_idx = float(gof[sec_pos])
     rmse = float(gof[0])
     nrmse_pct = 100.0 * rmse / np.std(yobs, ddof=1)
 
-    # ---- bootstrap CI (L3387-3407)
+    # ---- bootstrap CI (L3425-3445)
     ci, bstat, bstype_used = bca_ci(yobs, yprd, yben, yerr, jexp,
                                     cfg.n_resamples, cfg.bstype, rng=rng)
     main_ci = ci[:, pri].copy()
@@ -104,7 +104,7 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
     rmse_ci = ci[:, 0].copy()
     main_dstr = bstat[:, pri]
 
-    # ---- rounding rules (L3409-3434)
+    # ---- rounding rules (L3447-3472)
     main_fmt = "%1.3f"
     if flag == 3:
         if abs(main_idx) > 10:
@@ -137,7 +137,7 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
     if jexp == 2 and case.meas_unc == 0:
         imbalance = kge_nse_imbalance(yobs, yprd, float(gof[1]), float(gof[2]))
 
-    # ---- index probability function & classification (L3476-3548)
+    # ---- index probability function & classification (L3532-3604)
     if forced_to_nse:
         # KGE*/KGE class limits are stored in that index's scale
         # (GoFIndexSelection); a run forced back to NSE by active
@@ -204,7 +204,7 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
             t2 = "VERY GOOD"
         rating = f"From {t1} to {t2}"
 
-    # ---- bias & outliers (L3553-3624)
+    # ---- bias & outliers (L3609-3678)
     bias_rel, bias1, bias2 = relative_bias(yobs, yprd, cfg.bias_value, label)
     out = dixon_outliers(yobs, yprd)
 
@@ -232,7 +232,7 @@ def evaluate_case(case: EvalCase, cfg: FitevalConfig,
 
 
 def prepare_case(data: np.ndarray, no_repeated: bool = False) -> EvalCase:
-    """Interpret a no-uncertainty [Yobs Yprd (Yben)] array (fiteval_2 L3193)."""
+    """Interpret a no-uncertainty [Yobs Yprd (Yben)] array (fiteval_2 L3234)."""
     data = np.atleast_2d(np.asarray(data, dtype=float))
     repeated = 0
     if no_repeated:

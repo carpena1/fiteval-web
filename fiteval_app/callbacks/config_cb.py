@@ -1,4 +1,4 @@
-"""Configuration modal callbacks (Configuration_Callback, L257-485)."""
+"""Configuration modal callbacks (Configuration_Callback, L271-524)."""
 
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def register(app) -> None:
     def convert_thresholds(val, prev, t1, t2, t3):
         """Live threshold conversion when the main index changes.
 
-        Extends GoFIndexSelection (L299-312) with the E1 scale: NSE, the
+        Extends GoFIndexSelection (L313-343) with the E1 scale: NSE, the
         KGE family (KGE*/KGE) and E1 are three distinct scales, so every
         conversion pivots through NSE (e.g. KGE* -> NSE -> E1).
         """

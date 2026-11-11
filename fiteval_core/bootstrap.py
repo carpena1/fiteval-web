@@ -1,9 +1,9 @@
 """Bootstrap confidence intervals: BCa with stationary block bootstrap.
 
-Ports of bootstrapBca/bootbca (FITEVAL_GUI.m L4080-4222), blockbootstrap
-(L4228-4483), stationary_bootstrap (Kevin Sheppard, L4636-4707) and
+Ports of bootstrapBca/bootbca (FITEVAL_GUI.m L4109-4251), blockbootstrap
+(L4257-4512), stationary_bootstrap (Kevin Sheppard, L4665-4736) and
 opt_block_length (Politis & White 2001 w/ Nordman 2007 correction, Patton's
-code, L4711-4885).
+code, L4740-4914).
 
 RNG streams differ from MATLAB, so CIs are statistically (not bit-)
 equivalent; everything deterministic (opt_block_length, jackknife, BCa
@@ -40,7 +40,7 @@ def _mlag(x: np.ndarray, n: int) -> np.ndarray:
 
 
 def _lam(kk: np.ndarray) -> np.ndarray:
-    """Flat-top kernel weights (opt_block_length helper, L4830-4833)."""
+    """Flat-top kernel weights (opt_block_length helper, L4859-4862)."""
     a = np.abs(kk)
     return (a < 0.5) * 1.0 + 2.0 * (1.0 - a) * ((a >= 0.5) & (a <= 1.0))
 
@@ -48,7 +48,7 @@ def _lam(kk: np.ndarray) -> np.ndarray:
 def opt_block_length(data: np.ndarray) -> float:
     """Optimal average block length for the stationary bootstrap (BstarSB).
 
-    Exact port of opt_block_length (L4711-4834) for a single column.
+    Exact port of opt_block_length (L4740-4863) for a single column.
     """
     data = np.asarray(data, dtype=float).ravel()
     n = data.size
@@ -102,10 +102,10 @@ def opt_block_length(data: np.ndarray) -> float:
 
 def stationary_bootstrap_indices(t: int, nboot: int, w: float,
                                  rng: np.random.Generator) -> np.ndarray:
-    """(t, nboot) matrix of 0-based resampling indices (L4636-4707 + wrap).
+    """(t, nboot) matrix of 0-based resampling indices (L4665-4736 + wrap).
 
     Column b is one resample; geometric mean block length w; indices that ran
-    past the end are wrapped (blockbootstrap L4406-4413).
+    past the end are wrapped (blockbootstrap L4435-4442).
     """
     p = 1.0 / w
     idx = np.zeros((t, nboot), dtype=np.int64)
@@ -212,12 +212,12 @@ def bca_ci(yobs, yprd, yben, yerr, j, nboot: int, bstype: int,
     bstat = _eval_indices_columns(yobs, yprd, yben, yerr, j, idx)
     bstat = bstat[~np.any(np.isnan(bstat), axis=1), :]
 
-    # bias correction z0 per column (fz0, L4218-4222)
+    # bias correction z0 per column (fz0, L4247-4251)
     with np.errstate(divide="ignore"):
         z0 = norm.ppf(np.mean(bstat < stat, axis=0)
                       + np.mean(bstat == stat, axis=0) / 2.0)
 
-    # acceleration via jackknife, per index (bootbca L4164-4188, fixed
+    # acceleration via jackknife, per index (bootbca L4193-4217, fixed
     # MATLAB): drop jackknife rows containing any NaN, then compute a
     # separate acceleration constant for each of the four indices.
     jstat = _jackknife(yobs, yprd, yben, yerr, j)
