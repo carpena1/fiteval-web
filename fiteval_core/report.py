@@ -8,11 +8,18 @@ numerical_report() is a verbatim port of numerical_output
 
 from __future__ import annotations
 
+import re
+
 import numpy as np
 
 from .engine import BENCHMARK_NOTE, BSTYPE_NOTE
 from .indices import rounddec
 from .results import EvalResult
+
+
+def _one_line(text: str) -> str:
+    """Join a broken diagnostic back onto one line (regexprep, L4017)."""
+    return re.sub(r"\s*\n\s*", " ", text)
 
 
 def _fmt(spec: str, v: float) -> str:
@@ -101,7 +108,8 @@ def numerical_report(res: EvalResult) -> str:
     if res.bias_txt2:
         L.append("                 " + res.bias_txt2)
     if res.imbalance_txt:
-        L.append("       " + res.imbalance_txt)
+        # MATLAB collapses the line break for the file (L4017)
+        L.append("       " + _one_line(res.imbalance_txt))
     if res.repeated_cases == 1:
         L.append("")
         L.append(f"       {res.repeated_cases} repeated case was removed")
@@ -176,7 +184,9 @@ def summary_segments(res: EvalResult) -> list[list[tuple[str, bool]]]:
     if res.bias_txt2:
         lines.append([("                   " + res.bias_txt2, False)])
     if res.imbalance_txt:
-        lines.append([("  " + res.imbalance_txt, False)])
+        # kept as separate rows here: the figure panel does not wrap
+        lines += [[("  " + part, False)]
+                  for part in res.imbalance_txt.split("\n")]
     return lines
 
 

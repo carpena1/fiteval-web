@@ -200,8 +200,11 @@ def kge_nse_imbalance(yobs, yprd, nse: float, kge_star: float) -> str:
     rho = "\N{GREEK SMALL LETTER RHO}"
     al = "\N{GREEK SMALL LETTER ALPHA}"
     # tested in MATLAB's order, so a NaN ratio falls through to class 1
+    # the mismatch text is broken after the colon so it fits the figure's
+    # left column; MATLAB breaks it too (L3497), and the report file joins
+    # it back into one line, as MATLAB does at L4017
     if abs(1 - r2a) > 0.05:
-        head = f"Variability ({al}) - correlation ({rho}) mismatch: "
+        head = f"Variability ({al}) - correlation ({rho}) mismatch:\n   "
         if r2a > 1.05:
             return head + f"{rho} higher than {al} ({r:.2f} > {alpha:.2f})"
         tail = "underestimated" if alpha < 1 else "overestimated"

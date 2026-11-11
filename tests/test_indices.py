@@ -140,9 +140,22 @@ def test_imbalance_class_2a_rho_higher_than_alpha():
     """Damped amplitude: alpha = 0.3, rho = 1, so rho/alpha > 1.05 (L3486)."""
     txt = _imbalance(0.3 * _OBS)
     assert txt == ("Variability (\N{GREEK SMALL LETTER ALPHA}) - correlation "
-                   "(\N{GREEK SMALL LETTER RHO}) mismatch: "
+                   "(\N{GREEK SMALL LETTER RHO}) mismatch:\n   "
                    "\N{GREEK SMALL LETTER RHO} higher than "
                    "\N{GREEK SMALL LETTER ALPHA} (1.00 > 0.30)")
+
+
+def test_imbalance_mismatch_text_breaks_after_the_colon():
+    """The mismatch classes carry one break, so the figure panel does not
+    run into the right-hand column; class 1 is short enough to stay whole."""
+    for yprd in (0.3 * _OBS,
+                 0.80 * _OBS + np.random.default_rng(0).normal(0, .40, _OBS.size),
+                 1.20 * _OBS + np.random.default_rng(0).normal(0, .30, _OBS.size)):
+        txt = _imbalance(yprd)
+        assert txt.count("\n") == 1
+        assert txt.split("\n")[0].endswith("mismatch:")
+        assert max(len(p) for p in txt.split("\n")) < 55
+    assert "\n" not in _imbalance(_OBS + 0.5)
 
 
 def test_imbalance_class_2b_underestimated():

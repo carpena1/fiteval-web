@@ -79,3 +79,23 @@ def test_delete_output_files(tmp_path):
     assert n == 3
     remaining = {p.name for p in tmp_path.iterdir()}
     assert remaining == {"sample.in", "sample.err"}
+
+
+def test_report_file_keeps_the_diagnostic_on_one_line():
+    """The figure breaks the mismatch text; the report file joins it back,
+    as the desktop does at L4017."""
+    import numpy as np
+
+    from fiteval_core.config import FitevalConfig
+    from fiteval_core.engine import evaluate_case, prepare_case
+    from fiteval_core.report import numerical_report
+
+    x = np.linspace(0, 4 * np.pi, 100)
+    yobs = np.sin(x)
+    yprd = 0.80 * yobs + np.random.default_rng(0).normal(0, 0.40, x.size)
+    res = evaluate_case(prepare_case(np.column_stack([yobs, yprd]), "t.in"),
+                        FitevalConfig())
+    assert "\n" in res.imbalance_txt                      # broken for the figure
+    hits = [ln for ln in numerical_report(res).splitlines() if "mismatch:" in ln]
+    assert len(hits) == 1                                 # but one line in the file
+    assert hits[0].strip().endswith("and underestimated")
