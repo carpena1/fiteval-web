@@ -194,6 +194,32 @@ if you compare the two report files character by character.
 
 ---
 
+## Keeping the line numbers current
+
+The comments in `fiteval_core` and `fiteval_app` cite lines in
+`FITEVAL_GUI.m`, and so does this file. Editing the desktop source moves
+the code they point at.
+
+Keep a copy of `FITEVAL_GUI.m` before you change it, in
+`FITEVAL_GUI_src/_backup_*`. Then move every reference in one step:
+
+```bash
+# report only
+python scripts/remap_matlab_refs.py OLD.m NEW.m
+
+# write the changes
+python scripts/remap_matlab_refs.py OLD.m NEW.m --apply
+```
+
+The tool aligns the two copies and moves each reference by the same amount
+as the line it points at. It prints a short list of the references it could
+only estimate, which happens where the desktop code was rewritten rather
+than shifted. Read that list: an estimate is often right, but a rewritten
+block usually needs you to choose the new target by hand. The numbers in
+this file are not covered, so update them yourself.
+
+---
+
 ## Test the desktop before you trust it
 
 The two CF changes of 9 Nov 2026 were written without MATLAB on hand. Their
